@@ -1,0 +1,41 @@
+{
+  "name": "waxpeer",
+  "version": "1.0.0",
+  "description": "Waxpeer API wrapper for NodeJs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsc-watch --onSuccess \"node ./dist/index.js\"",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skylight-ity/waxpeer.git"
+  },
+  "keywords": [
+    "waxpeer",
+    "opskins",
+    "steam"
+  ],
+  "author": {
+    "name": "Ihtiyor",
+    "email": "ity@waxpeer.com",
+    "url": "https://twitter.com/skylight_ity"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/skylight-ity/waxpeer/issues"
+  },
+  "homepage": "https://github.com/skylight-ity/waxpeer#readme",
+  "devDependencies": {
+    "ts-node": "^8.3.0",
+    "tsc": "^1.20150623.0",
+    "tsc-watch": "^3.0.1",
+    "typescript": "^3.6.3"
+  },
+  "dependencies": {
+    "@types/node": "^12.7.5",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4"
+  }
+}
