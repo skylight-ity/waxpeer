@@ -1,13 +1,11 @@
-import { EventEmitter } from 'events'
 import RequestPromise from 'request-promise'
 import { FetchInventory, GetItems, GetMySteamInv, IUser, ListedItem, ListItems, ReadyToTransfer } from './types/waxpeer'
 
-export class Waxpeer extends EventEmitter {
+export class Waxpeer {
   private api: string
   public baseUrl = 'https://api.waxpeer.com'
   public version = 'v1'
   constructor(api: string) {
-    super()
     this.api = api
   }
   public async sleep(timer: number) {
