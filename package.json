@@ -1,12 +1,13 @@
 {
   "name": "waxpeer",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "Waxpeer API wrapper for NodeJs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "dev": "tsc-watch --onSuccess \"node ./dist/index.js\"",
-    "build": "tsc"
+    "build": "tsc",
+    "push": "tsc && npm publish"
   },
   "repository": {
     "type": "git",

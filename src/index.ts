@@ -1,12 +1,14 @@
 import RequestPromise from 'request-promise'
-import { FetchInventory, GetItems, GetMySteamInv, IUser, ListedItem, ListItems, ReadyToTransfer } from './types/waxpeer'
+import { FetchInventory, GetItems, GetMySteamInv, ISetMyKeys, IUser, ListedItem, ListItems, ReadyToTransfer } from './types/waxpeer'
 
 export class Waxpeer {
   private api: string
   public baseUrl = 'https://api.waxpeer.com'
   public version = 'v1'
-  constructor(api: string) {
+  private steam_api
+  constructor(api: string, steam_api: string) {
     this.api = api
+    this.steam_api = steam_api
   }
   public async sleep(timer: number) {
     await new Promise(res => setTimeout(res, timer))
@@ -14,10 +16,18 @@ export class Waxpeer {
 
   /**
    * 
+   * @param steam_api (optional) you can pass a steam api to waxpeer 
+   */
+  public setMyKeys(steam_api?: string): Promise<ISetMyKeys> {
+    return this.get('set-my-steamapi', 'v1', `steam_api=${steam_api ? steam_api : this.steam_api}&api=${this.api}`)
+  }
+
+  /**
+   * 
    * @param steam_api Your steam API that is linked to waxpeer account
    */
-  public getTradesToSend(steam_api: string): Promise<ReadyToTransfer> {
-    return this.get('ready-to-transfer-p2p', `steam_api = ${steam_api}`)
+  public getTradesToSend(steam_api?: string): Promise<ReadyToTransfer> {
+    return this.get('ready-to-transfer-p2p', 'v2', `steam_api=${steam_api ? steam_api : this.steam_api}`)
   }
 
   /**
@@ -84,22 +94,21 @@ export class Waxpeer {
     return await this.request<T>(newUrl, opt)
   }
 
-  public async get<T = object>(url: string, token?: string) {
+  public async get<T = object>(url: string, v: string = 'v1', token?: string) {
     let { baseUrl, api, version } = this
-    let newUrl = `${baseUrl}/${version}/${url}?api=${api}`
+    let newUrl = `${baseUrl}/${v ? v : version}/${url}?api=${api}`
     if (token) newUrl += `&${token}`
     try {
       return await this.request<T>(newUrl)
     } catch (e) {
-      return null
+      throw e
     }
   }
   public async request<T = object>(url: string, opt?: RequestPromise.RequestPromiseOptions) {
     try {
       return <T>JSON.parse(await RequestPromise(url, opt))
     } catch (e) {
-      await this.sleep(5000)
-      return await this.request(url, opt)
+      throw e
     }
   }
 }

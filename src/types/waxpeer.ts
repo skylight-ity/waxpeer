@@ -99,3 +99,7 @@ export interface User {
   expresslink?: string;
 }
 
+export interface ISetMyKeys {
+  success?: boolean
+  msg?: string
+}
