@@ -1,5 +1,5 @@
 import RequestPromise from 'request-promise'
-import { FetchInventory, GetItems, GetMySteamInv, ISetMyKeys, IUser, ListedItem, ListItems, ReadyToTransfer } from './types/waxpeer'
+import { FetchInventory, GetItems, GetMySteamInv, IBuy, ISetMyKeys, IUser, ListedItem, ListItems, ReadyToTransfer } from './types/waxpeer'
 
 export class Waxpeer {
   private api: string
@@ -13,6 +13,31 @@ export class Waxpeer {
   public async sleep(timer: number) {
     await new Promise(res => setTimeout(res, timer))
   }
+
+
+  /**
+   * 
+   * @param name Market hash name of the item
+   * @param price Price, should be greater than item price
+   * @param token Token from tradelink
+   * @param partner Partner from tradelink
+   */
+  public buyItemWithName(name: string, price: number, token: string, partner: string): Promise<IBuy> {
+    return this.get('buy-one-p2p', 'v1', `name=${encodeURIComponent(name)}&price=${price}&token=${token}&partner=${partner}`)
+  }
+
+  /**
+   * 
+   * @param item_id Item id from fetching items
+   * @param price Price of the item 1$=1000
+   * @param token Token from tradelink
+   * @param partner Partner from tradelink
+   */
+  public buyItemWithId(item_id: number, price: number, token: string, partner: string): Promise<IBuy> {
+    return this.get('buy-one-p2p', 'v1', `item_id=${item_id}&price=${price}&token=${token}&partner=${partner}`)
+  }
+
+
 
   /**
    * 
@@ -36,8 +61,8 @@ export class Waxpeer {
    * @param limit How many items you want to fetch (max 100)
    * @param game Game (csgo,dota2,vgo and etc check https://api.waxpeer.com/docs/#/Steam/get_get_items_list)
    */
-  public getItemsList(skip: number = 0, limit: number = 10, game: string = 'csgo'): Promise<GetItems> {
-    return this.get('get-items-list', `game=${game}&skip=${skip}&limit=${limit}`)
+  public getItemsList(skip: number = 0, limit: number = 50, game: string = 'csgo', discount: number = 0): Promise<GetItems> {
+    return this.get('get-items-list', `game=${game}&skip=${skip}&limit=${limit}&discount=${discount}`)
   }
 
   /**
@@ -82,6 +107,9 @@ export class Waxpeer {
     return this.get('search-by-name', `name=${encodeURIComponent(name)}`)
   }
 
+  /**
+   * Get Profile data
+   */
   public getProfile(): Promise<IUser> {
     return this.get('user')
   }
@@ -104,6 +132,8 @@ export class Waxpeer {
       throw e
     }
   }
+
+
   public async request<T = object>(url: string, opt?: RequestPromise.RequestPromiseOptions) {
     try {
       return <T>JSON.parse(await RequestPromise(url, opt))
