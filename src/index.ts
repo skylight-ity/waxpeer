@@ -1,14 +1,15 @@
 import RequestPromise from 'request-promise'
-import { FetchInventory, GetItems, GetMySteamInv, IBuy, ISetMyKeys, IUser, ListedItem, ListItems, ReadyToTransfer } from './types/waxpeer'
+import { FetchInventory, GetItems, GetMySteamInv, IBuy, ISetMyKeys, IUser, ListedItem, ListItems, ReadyToTransfer, TradesStatus } from './types/waxpeer'
 
 export class Waxpeer {
   private api: string
   public baseUrl = 'https://api.waxpeer.com'
   public version = 'v1'
   private steam_api
-  constructor(api: string, steam_api: string) {
+  constructor(api: string, steam_api?: string) {
     this.api = api
-    this.steam_api = steam_api
+    if (steam_api)
+      this.steam_api = steam_api
   }
   public async sleep(timer: number) {
     await new Promise(res => setTimeout(res, timer))
@@ -23,7 +24,7 @@ export class Waxpeer {
    * @param partner Partner from tradelink
    */
   public buyItemWithName(name: string, price: number, token: string, partner: string): Promise<IBuy> {
-    return this.get('buy-one-p2p', 'v1', `name=${encodeURIComponent(name)}&price=${price}&token=${token}&partner=${partner}`)
+    return this.get('buy-one-p2p-name', 'v1', `name=${encodeURIComponent(name)}&price=${price}&token=${token}&partner=${partner}`)
   }
 
   /**
@@ -37,7 +38,18 @@ export class Waxpeer {
     return this.get('buy-one-p2p', 'v1', `item_id=${item_id}&price=${price}&token=${token}&partner=${partner}`)
   }
 
-
+  /**
+   * 
+   * @param ids Ids or id that you recived when purchasing items
+   */
+  public tradeRequestStatus(ids: number | number[] | string | string[]): Promise<TradesStatus> {
+    let id = []
+    if (typeof ids !== 'object')
+      id = [ids]
+    else
+      id = [...ids]
+    return this.get('check-many-steam', 'v1', id.map(i => `id=${i}`).join('&'))
+  }
 
   /**
    * 

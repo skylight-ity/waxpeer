@@ -109,3 +109,22 @@ export interface IBuy {
   msg?: string
   id?: number
 }
+
+export interface TradesStatus {
+  success?: boolean;
+  trades?: TradeRecive[];
+}
+
+export interface TradeRecive {
+  price?: number;
+  reason?: string;
+  trade_id?: string;
+  for_steamid64?: string;
+  id?: string;
+  name?: string;
+  status?: number;
+  done?: boolean;
+  send_until?: number;
+  last_updated?: number;
+  counter?: number;
+}
