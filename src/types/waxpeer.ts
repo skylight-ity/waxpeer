@@ -35,12 +35,13 @@ export interface GetItems {
 }
 
 export interface Datum {
-  name?: string;
-  price?: number;
-  selling?: boolean;
-  opskins_id?: number
-  image?: string;
   item_id?: string;
+  image?: string;
+  price?: number;
+  name?: string;
+  steam_price?: number;
+  best_deals?: number;
+  discount?: number;
 }
 export interface FetchInventory {
   success: boolean;

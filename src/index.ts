@@ -72,9 +72,11 @@ export class Waxpeer {
    * @param skip How many items you want to skip
    * @param limit How many items you want to fetch (max 100)
    * @param game Game (csgo,dota2,vgo and etc check https://api.waxpeer.com/docs/#/Steam/get_get_items_list)
+   * @param min_price Min price 1$=1000
+   * @param max_price Max price
    */
-  public getItemsList(skip: number = 0, limit: number = 50, game: string = 'csgo', discount: number = 0): Promise<GetItems> {
-    return this.get('get-items-list', `game=${game}&skip=${skip}&limit=${limit}&discount=${discount}`)
+  public getItemsList(skip: number = 0, limit: number = 50, game: string = 'csgo', discount: number = 0, min_price: number = 0, max_price: number = 10000000): Promise<GetItems> {
+    return this.get('get-items-list', `game=${game}&skip=${skip}&limit=${limit}&discount=${discount}&min_price=${min_price}&max_price=${max_price}`)
   }
 
   /**
