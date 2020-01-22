@@ -75,9 +75,10 @@ export class Waxpeer {
    * @param min_price Min price 1$=1000
    * @param max_price Max price
    * @param sort The order in which items are returned in (profit, desc, asc, best_deals)
+   * @param minified If you pass this you will recieve additional info like float. Available values : 1, 2
    */
-  public getItemsList(skip: number = 0, limit: number = 50, game: string = 'csgo', discount: number = 0, min_price: number = 0, max_price: number = 10000000, sort: string = 'desc'): Promise<GetItems> {
-    return this.get('get-items-list', `game=${game}&skip=${skip}&limit=${limit}&discount=${discount}&min_price=${min_price}&max_price=${max_price}&sort=${sort}`)
+  public getItemsList(skip: number = 0, limit: number = 50, game: string = 'csgo', discount: number = 0, min_price: number = 0, max_price: number = 10000000, sort: string = 'desc', minified : number = 0): Promise<GetItems> {
+    return this.get('get-items-list', `game=${game}&skip=${skip}&limit=${limit}&discount=${discount}&min_price=${min_price}&max_price=${max_price}&sort=${sort}&minified=${minified}`)
   }
 
   /**
