@@ -6,8 +6,11 @@ export class Waxpeer {
   public baseUrl = 'https://api.waxpeer.com'
   public version = 'v1'
   private steam_api
-  constructor(api: string, steam_api?: string) {
+  private proxy;
+
+  constructor(api: string, steam_api?: string, proxy?: string) {
     this.api = api
+    this.proxy = proxy;
     if (steam_api)
       this.steam_api = steam_api
   }
@@ -152,7 +155,7 @@ export class Waxpeer {
 
   public async request<T = object>(url: string, opt?: RequestPromise.RequestPromiseOptions) {
     try {
-      return <T>JSON.parse(await RequestPromise(url, opt))
+      return <T>JSON.parse(await RequestPromise(url, {...opt, proxy: this.proxy}))
     } catch (e) {
       throw e
     }
