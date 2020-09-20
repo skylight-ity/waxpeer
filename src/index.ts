@@ -1,5 +1,5 @@
 import RequestPromise from 'request-promise'
-import { FetchInventory, GetItems, GetMySteamInv, IBuy, ISetMyKeys, IUser, ListedItem, ListItems, ReadyToTransfer, TradesStatus } from './types/waxpeer'
+import { FetchInventory, GetItems, GetMySteamInv, IBuy, ISetMyKeys, IUser, ListedItem, ListItems, ReadyToTransfer, TradesStatus, ItemsAvailability } from './types/waxpeer'
 
 export class Waxpeer {
   private api: string
@@ -49,6 +49,19 @@ export class Waxpeer {
     else
       id = [...ids]
     return this.get('check-many-steam', 'v1', id.map(i => `id=${i}`).join('&'))
+  }
+
+  /**
+   *
+   * @param ids Ids or id of items that you want to check availability of
+   */
+  public checkAvailability(item_ids: number | number[] | string | string[]): Promise<ItemsAvailability> {
+    let item_id = [];
+    if (typeof item_ids !== 'object')
+      item_id = [item_ids];
+    else
+      item_id = [...item_ids];
+    return this.get('check-availability', 'v1', item_id.map(i => `item_id=${i}`).join('&'));
   }
 
   /**

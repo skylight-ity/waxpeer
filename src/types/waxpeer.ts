@@ -129,3 +129,16 @@ export interface TradeRecive {
   last_updated?: number;
   counter?: number;
 }
+
+export interface ItemsAvailability {
+  success?: boolean;
+  items?: AvailableItem[];
+}
+
+export interface AvailableItem {
+  item_id?: number;
+  selling?: boolean;
+  price?: number;
+  name?: string;
+  image?: string;
+}
