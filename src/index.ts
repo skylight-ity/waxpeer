@@ -101,7 +101,7 @@ export class Waxpeer {
    * @param skip Skip items
    * @param game Game
    */
-  public getMyInventory(skip: number = 0, game: string = 'csgo'): Promise<GetMySteamInv> {
+  public getMyInventory(skip: number = 0, game: number = 730): Promise<GetMySteamInv> {
     return this.get('get-my-inventory', `game=${game}&skip=${skip}`)
   }
 
