@@ -51,13 +51,16 @@ export interface FetchInventory {
 export interface ListItems {
   success: boolean
   msg?: string
-  items?: ListedItem[]
+  items?: IListItem[]
 }
-
-export interface ListedItem {
+export interface IListItem {
   item_id?: number
   price?: number
   position: number
+}
+export interface ListedItem {
+  item_id?: number
+  price?: number
 }
 
 export interface GetMySteamInv {
