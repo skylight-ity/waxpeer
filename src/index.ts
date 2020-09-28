@@ -23,10 +23,9 @@ export class Waxpeer {
   private api: string
   public baseUrl = 'https://api.waxpeer.com'
   public version = 'v1'
-  private steam_api
-  constructor(api: string, steam_api?: string) {
+  constructor(api: string, baseUrl?: string) {
     this.api = api
-    if (steam_api) this.steam_api = steam_api
+    if (baseUrl) this.baseUrl = baseUrl
   }
   public async sleep(timer: number) {
     await new Promise((res) => setTimeout(res, timer))
@@ -103,8 +102,8 @@ export class Waxpeer {
    *
    * @param steam_api (optional) you can pass a steam api to waxpeer
    */
-  public setMyKeys(steam_api?: string): Promise<ISetMyKeys> {
-    return this.get('set-my-steamapi', `steam_api=${steam_api ? steam_api : this.steam_api}&api=${this.api}`)
+  public setMyKeys(steam_api: string): Promise<ISetMyKeys> {
+    return this.get('set-my-steamapi', `steam_api=${steam_api}&api=${this.api}`)
   }
 
   /**
