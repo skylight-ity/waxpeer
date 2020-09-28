@@ -57,6 +57,7 @@ export interface ListItems {
 export interface ListedItem {
   item_id?: number
   price?: number
+  position: number
 }
 
 export interface GetMySteamInv {
@@ -203,6 +204,7 @@ interface IFailedEdit {
 export interface IListedItem {
   item_id: number
   price: number
+  position: number
   name: string
   date: string
   steam_price: ISteamPrice
