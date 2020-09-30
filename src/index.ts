@@ -249,9 +249,11 @@ export class Waxpeer {
    *
    * @param ids Either array or one item_id that you want to remove from listing
    */
-  public removeItems(ids: number | number[] | string | string[]) {
+  public removeItems(
+    ids: number | number[] | string | string[],
+  ): Promise<{ success: boolean; count: number; removed: number[] }> {
     let removeId: any[] = typeof ids === 'object' ? ids : [ids]
-    this.get(`remove-items`, removeId.map((i) => `id=${i}`).join('&'))
+    return this.get(`remove-items`, removeId.map((i) => `id=${i}`).join('&'))
   }
   public async post(url: string, body: any): Promise<any> {
     let { baseUrl, api, version } = this

@@ -40,6 +40,7 @@ export interface Datum {
   price?: number
   name?: string
   steam_price?: number
+  position: number
   best_deals?: number
   discount?: number
 }
