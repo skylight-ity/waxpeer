@@ -39,7 +39,7 @@ export class Waxpeer {
    * @param token Token from tradelink
    * @param partner Partner from tradelink
    * @param project_id Your custom id string[50]
-   * @exmaple
+   * @example
    * // example response:
    * {
    *   "success": true,
@@ -70,7 +70,7 @@ export class Waxpeer {
    * @param token Token from tradelink
    * @param partner Partner from tradelink
    * @param project_id Your custom id string[50]
-   * @exmaple
+   * @example
    * // example resonse:
    * {
    *   "success": true,
