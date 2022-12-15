@@ -1,163 +1,234 @@
 export interface ReadyToTransfer {
-  success?: boolean
-  trades?: Trade[]
+  success?: boolean;
+  trades?: Trade[];
 }
 
 export interface Trade {
-  id?: number
-  costum_id?: string
-  trade_id?: number
-  status?: string
-  trade_message?: string
-  tradelink?: string
-  done?: boolean
-  for_steamid32?: string
-  for_steamid64?: string
-  created?: string
-  send_until?: string
-  items?: Item[]
+  id?: number;
+  costum_id?: string;
+  trade_id?: number;
+  status?: string;
+  trade_message?: string;
+  tradelink?: string;
+  done?: boolean;
+  for_steamid32?: string;
+  for_steamid64?: string;
+  created?: string;
+  send_until?: string;
+  items?: Item[];
 }
 
 export interface Item {
-  id?: number
-  item_id?: string
-  give_amount?: number
-  image?: string
-  price?: number
-  game?: string
-  name?: string
-  status?: number
+  id?: number;
+  item_id?: string;
+  give_amount?: number;
+  image?: string;
+  price?: number;
+  game?: string;
+  name?: string;
+  status?: number;
 }
 
 export interface GetItems {
-  success?: boolean
-  items?: Datum[]
+  success?: boolean;
+  items?: Datum[];
 }
 
 export interface Datum {
-  item_id?: string
-  image?: string
-  price?: number
-  name?: string
-  steam_price?: number
-  position: number
-  best_deals?: number
-  discount?: number
+  name: string;
+  price: number;
+  image: string;
+  item_id: string;
+  phase?: keyof typeof EDopplersPhases;
 }
 export interface FetchInventory {
-  success: boolean
-  msg?: string
+  success: boolean;
+  msg?: string;
+  total_inventory_count?: number;
 }
 
 export interface ListItems {
-  success: boolean
-  msg?: string
-  items?: IListItem[]
+  success: boolean;
+  msg?: string;
+  listed?: IListItem[];
+  failed?: IFailedEdit[];
 }
 export interface IListItem {
-  item_id?: number
-  price?: number
-  position: number
+  item_id?: number;
+  price?: number;
+  position?: number;
+  name?: string;
 }
 export interface ListedItem {
-  item_id?: number
-  price?: number
+  item_id?: number | string; // WARNING: string required for RUST items
+  price?: number;
+}
+export interface IRemoveAll {
+  success: boolean;
+  msg?: string;
+  count?: number;
+}
+
+export interface IBuyOrderHistory {
+  success: boolean;
+  msg?: string;
+  history?: IBuyOrderObject[];
+  count?: number;
+}
+
+interface IBuyOrderObject {
+  id: number;
+  item_name: string;
+  game: string;
+  price: number;
+  created: string;
+  last_updated: string;
+}
+
+export interface IBuyOrders {
+  success: boolean;
+  msg?: string;
+  offers?: IBuyOrdersOffer[];
+  count?: number;
+}
+
+interface IBuyOrdersOffer {
+  id: number;
+  name: string;
+  price: number;
+  amount: number;
+  game: string;
+  filled: number;
+  by: string;
+}
+
+export interface ICreateBuyOrder {
+  success: boolean;
+  msg?: string;
+  filled?: number;
+  id?: number;
+}
+
+export interface IEditBuyOrder {
+  success: boolean;
+  msg?: string;
+  id?: number;
+  amount?: number;
+  price?: number;
+}
+
+export interface IRemoveBuyOrder {
+  success: boolean;
+  msg?: string;
+  removed?: number;
+}
+
+export interface IRemoveAllOrders {
+  success: boolean;
+  msg?: string;
+  count?: number;
 }
 
 export interface GetMySteamInv {
-  success?: boolean
-  items?: SteamInvItem[]
-  count?: number
-  msg?: string
+  success?: boolean;
+  items?: SteamInvItem[];
+  count?: number;
+  msg?: string;
 }
 
 export interface SteamInvItem {
-  item_id?: string
-  color?: string
-  type?: string
-  market_name?: string
-  steam_price?: SteamPrice
+  item_id?: string;
+  type?: string;
+  icon_url?: string;
+  name?: string;
+  steam_price?: SteamPrice;
 }
 
 export interface SteamPrice {
-  name?: string
-  average?: number
-  img?: string
+  average?: number;
+  rarity_color?: string;
+  rarity?: string;
+  current?: number;
+  name?: string;
+  lowest_price?: number;
+  img?: string;
 }
+
 export interface IUser {
-  success?: boolean
-  user?: User
+  success?: boolean;
+  user?: User;
 }
 
 export interface User {
-  wallet?: number
-  id?: string
-  id64?: string
-  avatar?: string
-  name?: string
-  sell_fees?: number
-  can_p2p?: boolean
-  eth_wallet?: string
-  btc_wallet?: string
-  ltc_wallet?: string
-  tradelink?: string
-  expresslink?: string
-  user_id?: string
+  wallet?: number;
+  id?: string;
+  id64?: string;
+  avatar?: string;
+  name?: string;
+  sell_fees?: number;
+  can_p2p?: boolean;
+  eth_wallet?: string;
+  btc_wallet?: string;
+  ltc_wallet?: string;
+  tradelink?: string;
+  expresslink?: string;
+  user_id?: string;
 }
 
 export interface ISetMyKeys {
-  success?: boolean
-  msg?: string
+  success?: boolean;
+  msg?: string;
 }
 
 export interface IBuy {
-  success: boolean
-  msg?: string
-  id?: number
+  success: boolean;
+  msg?: string;
+  id?: number;
 }
 
 export interface TradesStatus {
-  success?: boolean
-  trades?: TradeRecive[]
+  success?: boolean;
+  trades?: TradeRecive[];
 }
 
 export interface TradeRecive {
-  price?: number
-  reason?: string
-  trade_id?: string
-  for_steamid64?: string
-  id?: string
-  name?: string
-  status?: number
-  done?: boolean
-  send_until?: number
-  last_updated?: number
-  counter?: number
+  price?: number;
+  reason?: string;
+  trade_id?: string;
+  for_steamid64?: string;
+  id?: string;
+  name?: string;
+  status?: number;
+  done?: boolean;
+  send_until?: number;
+  last_updated?: number;
+  counter?: number;
 }
 // Generated by https://quicktype.io
 
 export interface IBuyMyHistory {
-  success: boolean
-  history: History[]
+  success: boolean;
+  history: History[];
 }
 
 export interface History {
-  trade_id: null | string
-  token: string
-  partner: number
-  created: string
-  send_until: string
-  reason: Reason
-  id: number
-  item_id: string
-  image: string
-  price: number
-  name: string
-  status: number
+  trade_id: null | string;
+  token: string;
+  partner: number;
+  created: string;
+  send_until: string;
+  reason: Reason;
+  id: number;
+  item_id: string;
+  image: string;
+  price: number;
+  name: string;
+  status: number;
 }
 
 export enum Reason {
   Accepted = 'Accepted',
+  InvalidTradelink = 'Invalid tradelink',
   BuyerFailedToAccept = 'Buyer failed to accept',
   ItemPriceHasIncreasedOrItemIsNoLongerAvailable = 'Item price has increased or item is no longer available',
   SellerFailedToAccept = 'Seller failed to accept',
@@ -165,70 +236,468 @@ export enum Reason {
 // Generated by https://quicktype.io
 
 export interface IPrices {
-  success: boolean
-  items: Item[]
+  success: boolean;
+  items: IPricesItem[];
 }
 
-export interface Item {
-  name?: string
-  max: number
-  avg: number
-  count: string
-  min: number
+interface IPricesItem {
+  name: string;
+  count: number;
+  min: number;
+  img?: string;
+  steam_price?: string;
+  rarity_color?: string;
+  type?: string;
 }
-// Generated by https://quicktype.io
 
-export interface ICheckLink {
-  success: boolean
-  msg: string
-  link: string
-  token: string
-  steamid32: string
+export interface IPricesDopplers {
+  success: boolean;
+  items: IPricesDopplersItem[];
+  msg?: string;
 }
+
+interface IPricesDopplersItem {
+  name: string;
+  item_id: string;
+  price: number;
+  phase: string;
+  steam_price: number;
+  img: string;
+  weapon: string;
+  paint_index: number;
+  float: number;
+}
+
 export interface IEditItemsReq {
-  item_id: number
-  price: number
+  item_id: number | string; // WARNING: string required for RUST items
+  price: number;
 }
 export interface IResponseEdit {
-  updated: IResponseEditItem[]
-  success: boolean
-  failed: IFailedEdit[]
-  removed: number[]
+  updated: IResponseEditItem[];
+  success: boolean;
+  failed: IFailedEdit[];
+  removed: number[];
 }
 export interface IResponseEditItem {
-  item_id: number
-  price: number
-  position: number
+  item_id: number;
+  price: number;
+  position: number;
 }
 interface IFailedEdit {
-  item_id: number
-  msg: string
-  name: string
+  item_id?: string | number;
+  price?: number;
+  msg: string;
+  msBeforeNext?: number;
 }
+
 export interface IListedItem {
-  item_id: number
-  price: number
-  position: number
-  name: string
-  date: string
-  steam_price: ISteamPrice
+  item_id: number;
+  price: number;
+  position: number;
+  name: string;
+  market_name?: string;
+  date: string;
+  steam_price: SteamPrice;
 }
-export interface ISteamPrice {
-  average: number
-  current: number
-  img: string
+
+export interface IGetSteamItems {
+  success: boolean;
+  items: IGetSteamItemsItem[];
 }
-export interface ISteamInfoItem {
-  name: string
-  average: number
-  type: string
-  collection: string
-  ru_name: string
+
+interface IGetSteamItemsItem {
+  name: string;
+  average?: number;
+  game_id: number;
+  type?: string;
+  collection?: string;
+  ru_name?: string;
 }
+
+export interface IMerchantUser {
+  success: boolean;
+  user?: IMerchantUserObject;
+  msg?: string;
+}
+
+interface IMerchantUserObject {
+  steam_id: string;
+  can_sell: boolean;
+  can_p2p: boolean;
+  tradelink: string;
+}
+
+export interface IMerchantInventoryUpate {
+  success: boolean;
+  msg?: string;
+  count?: number;
+}
+
+export interface IMerchantInventory {
+  success: boolean;
+  items?: IMerchantInventoryItem[];
+  count?: number;
+  msg?: string;
+}
+
+export interface IMerchantListItem {
+  item_id: string | number;
+  price: number;
+  instant?: boolean;
+}
+
+interface IMerchantInventoryItem {
+  item_id: string;
+  limit: number;
+  instant_price?: number;
+  type?: string;
+  name: string;
+  steam_price: SteamPrice;
+}
+
+export interface IMerchantDepositsHistory {
+  success: boolean;
+  msg?: string;
+  data?: IMerchantDepositsHistoryDatum[];
+}
+
+interface IMerchantDepositsHistoryDatum {
+  id: string;
+  costum_id: string;
+  trade_id: string;
+  tradelink: string;
+  steamid_seller: string;
+  created: string;
+  send_until: string;
+  last_updated: string;
+  reason: string;
+  user: IMerchantDepositsHistoryUser;
+  items: IMerchantDepositsHistoryItem[];
+}
+
+interface IMerchantDepositsHistoryItem {
+  item_id: string;
+  price: number;
+  give_amount: number;
+  name: string;
+  status: number;
+}
+
+interface IMerchantDepositsHistoryUser {
+  name: string;
+  steam_id: string;
+  steam_joined: number;
+}
+
+export interface IMerchantListItemsSteam {
+  success: boolean;
+  msg?: string;
+  listed?: IMerchantListItemsSteamListed[];
+  tx_id?: string;
+}
+
+interface IMerchantListItemsSteamListed {
+  item_id: number;
+  price: number;
+  name: string;
+}
+
 export interface IAvailable {
-  name: string
-  price: number
-  selling: true
-  image: string
-  item_id: string
+  name: string;
+  price: number;
+  selling: true;
+  image: string;
+  item_id: string;
 }
+export interface IMyHistory {
+  success: boolean;
+  data: IMyHistoryData;
+}
+
+interface IMyHistoryData {
+  trades: IMyHistoryTrade[];
+  transactions: IMyHistoryTransaction[];
+}
+
+interface IMyHistoryTransaction {
+  wallet: string;
+  type: string;
+  status: string;
+  amount: string;
+  give_amount: string;
+  direction: string;
+  date: string;
+}
+
+interface IMyHistoryTrade {
+  date: string;
+  created: string;
+  id: number;
+  item_id: string;
+  give_amount: number;
+  image: string;
+  price: number;
+  game: string;
+  name: string;
+  status: number;
+  average: number;
+  action: string;
+}
+
+export interface ICheckTradeLink {
+  success: boolean;
+  info?: string;
+  msg?: ICheckTradeLinkMessages | string;
+  steamid32?: string;
+  link?: string;
+  token?: string;
+  steamid64?: string;
+}
+
+export interface IMassInfo {
+  success: boolean;
+  data: IMassInfoData;
+}
+
+interface IMassInfoData {
+  item: IMassInfoItem;
+}
+
+interface IMassInfoItem {
+  listings: IMassInfoListing[];
+  orders: any;
+  history: any;
+  info: any;
+}
+
+interface IMassInfoListing {
+  price: number;
+  by: string;
+  item_id: string;
+  name: string;
+  paint_index: number;
+  steam_price: number;
+  classid: string;
+  image: string;
+  phase?: keyof typeof EDopplersPhases;
+}
+
+export interface IReadyTransferTrade {
+  id: number;
+  costum_id: string;
+  trade_id: string;
+  tradelink: string;
+  trade_message: string;
+  done: boolean;
+  stage: number;
+  creator: string;
+  send_until: string;
+  last_updated: string;
+  for_steamid64: string;
+  user: IReadyTransferUser;
+  seller: IReadyTransferUser;
+  items: IReadyTransferItem[];
+}
+
+interface IReadyTransferItem {
+  id: number;
+  item_id: string;
+  give_amount: number;
+  merchant: string;
+  image: string;
+  price: number;
+  game: string;
+  name: string;
+  status: number;
+}
+
+interface IReadyTransferUser {
+  id: string;
+  avatar?: string;
+}
+
+export interface ICheckWssUser {
+  success: boolean;
+  step?: number;
+  msg: string;
+}
+
+export interface IGetItemsList {
+  success: boolean;
+  items?: IGetItemsListItem[];
+  count?: number;
+  msg?: string;
+}
+
+export interface IHistory {
+  success: boolean;
+  msg?: string;
+  history?: IHistoryObject[];
+}
+
+interface IHistoryObject {
+  item_id: string;
+  trade_id: number;
+  token: string;
+  partner: number;
+  created: string;
+  send_until: string;
+  reason: string;
+  id: number;
+  image: string;
+  price: number;
+  name: string;
+  status: number;
+}
+
+interface IGetItemsListItem {
+  name: string;
+  price: number;
+  float: number;
+  best_deals: number;
+  discount: number;
+  steam_price: number;
+  image: string;
+  item_id: string;
+  brand: string;
+  type: string;
+}
+
+export enum ICheckTradeLinkMessages {
+  'Invalid tradelink',
+  'Missing partner',
+  'Missing token',
+  'Your tradelink is incorect, please update it',
+  "You're banned for not accepting trades",
+  "We couldn't validate your trade link, either your inventory is private or you can't trade",
+  'Please set your steam inventory public',
+  'User has VACBAN or Game Ban',
+  'There was an error with tradelink,please try again',
+}
+
+export enum EDopplersPhases {
+  'any',
+  'Emerald',
+  'Ruby',
+  'Sapphire',
+  'Black Pearl',
+  'Phase 1',
+  'Phase 2',
+  'Phase 3',
+  'Phase 4',
+}
+
+export enum EMinExteriors {
+  'FN',
+  'MW',
+  'FT',
+  'WW',
+  'BS',
+}
+
+export enum EWeapon {
+  'Bayonet',
+  'Bowie Knife',
+  'Butterfly Knife',
+  'Falchion Knife',
+  'Flip Knife',
+  'Glock-18',
+  'Gut Knife',
+  'Huntsman Knife',
+  'Karambit',
+  'M9 Bayonet',
+  'Navaja Knife',
+  'Shadow Daggers',
+  'Stiletto Knife',
+  'Talon Knife',
+  'Ursus Knife',
+}
+
+export enum EWeaponBrand {
+  'knife',
+  'pass',
+  'key',
+  'sticker',
+  'pistol',
+  'shotgun',
+  'smg',
+  'machinegun',
+  'rifle',
+  'sniper_rifle',
+  'gloves',
+  'AK47u',
+  'Armored Metal Door',
+  'Balaclava',
+  'Bandana',
+  'Beenie',
+  'Bolt Rifle',
+  'Bone Club',
+  'Bone Knife',
+  'Boonie',
+  'Boots',
+  'Bucket Helmet',
+  'Burlap Gloves',
+  'Burlap Headwrap',
+  'Burlap Shirt',
+  'Burlap Shoes',
+  'Burlap Trousers',
+  'Cap',
+  'Coffeecan Helmet',
+  'Collared Shirt',
+  'Concrete Barricade',
+  'Crossbow',
+  'Deer Skull Mask',
+  'Double Barrel Shotgun',
+  'Grenade',
+  'Guitar',
+  'Hammer',
+  'Hatchet',
+  'Hide Halterneck',
+  'Hide Pants',
+  'Hide Poncho',
+  'Hide Skirt',
+  'Hoodie',
+  'Jacket',
+  'Large Wooden Box',
+  'Long TShirt',
+  'Longsword',
+  'Metal Facemask',
+  'Metal Torso Plate',
+  "Miner's Hat",
+  'Mp5',
+  'Pants',
+  'Pump Shotgun',
+  'Reactive Sign',
+  'Revolver',
+  'Rifle Helmet',
+  'Roadsign Jacket',
+  'Roadsign Kilt',
+  'Rock',
+  'Rocket Launcher',
+  'Salvaged Icepick',
+  'Salvaged Sword',
+  'Sandbag Barricade',
+  'Satchel Explosives',
+  'Semi Auto Pistol',
+  'Semi Auto Rifle',
+  'Sheet Metal Door',
+  'Shorts',
+  'Sleeping Bag',
+  'SMG',
+  'Snow Jacket',
+  'Stone Hatchet',
+  'Stone Pickaxe',
+  'Tank Top',
+  'Thompson',
+  'TShirt',
+  'Waterpipe Shotgun',
+  'Wooden Box',
+  'Wooden Door',
+}
+
+export const EGameId = {
+  csgo: 730,
+  dota2: 570,
+  tf2: 440,
+  rust: 252490,
+} as const;
