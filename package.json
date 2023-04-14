@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "./node_modules/.bin/tsc-watch --onSuccess \"node ./dist/test.js\"",
-    "build": "./node_modules/.bin/tsc",
-    "push": "./node_modules/.bin/tsc && npm publish --access public"
+    "dev": "npx tsc-watch --onSuccess \"node ./dist/test.js\"",
+    "build": "npx tsc",
+    "push": "npx tsc && npm publish --access public"
   },
   "repository": {
     "type": "git",
