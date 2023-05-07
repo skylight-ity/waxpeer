@@ -42,8 +42,14 @@ export class WebsiteWebsocket extends EventEmitter {
     socket.on('update_item', (data) => {
       this.emit('update_item', data);
     });
+    socket.on('updated_item', (data) => {
+      this.emit('updated_item', data);
+    });
     socket.on('remove', (data) => {
       this.emit('remove_item', data);
+    });
+    socket.on('change_user', (data) => {
+      this.emit('change_user', data);
     });
     socket.on('connect_error', (err) => {
       this.socketOpen = false;
