@@ -1,12 +1,15 @@
 import EventEmitter from 'events';
 import io from 'socket.io-client';
-import { WebsiteSocketSubEvents } from '../types/sockets';
+import { ItemChangeEvent, WebsiteSocketSubEvents } from '../types/sockets';
 
 export class WebsiteWebsocket extends EventEmitter {
   private apiKey: string;
   public socketOpen = false;
   public subEvents: Array<keyof typeof WebsiteSocketSubEvents> = [];
-  constructor(apiKey?: string, subEvents: Array<keyof typeof WebsiteSocketSubEvents> = []) {
+  constructor(
+    apiKey?: string,
+    subEvents: Array<keyof typeof WebsiteSocketSubEvents> = []
+  ) {
     super();
     this.apiKey = apiKey;
     this.connectWss();
@@ -36,7 +39,7 @@ export class WebsiteWebsocket extends EventEmitter {
     socket.on('handshake', (data) => {
       this.emit('handshake', data);
     });
-    socket.on('add_item', (data) => {
+    socket.on('add_item', (data: ItemChangeEvent) => {
       this.emit('add_item', data);
     });
     socket.on('update_item', (data) => {
@@ -45,6 +48,7 @@ export class WebsiteWebsocket extends EventEmitter {
     socket.on('updated_item', (data) => {
       this.emit('updated_item', data);
     });
+    socket.on('steamTrade', (data) => this.emit('steamTrade', data));
     socket.on('remove', (data) => {
       this.emit('remove_item', data);
     });

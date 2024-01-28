@@ -92,8 +92,11 @@ export interface UpdateItemEvent {
 }
 
 export interface ChangeUserEvent {
-  name: string;
-  value?: number;
+  wallet?: number;
+  kyc_status?: string;
+  name?: string;
+  avatar?: string;
+  ban?: boolean;
 }
 
 export interface UpdatedItemEvent {
@@ -116,12 +119,12 @@ export interface UpdatedItemEvent {
   send_until: string;
   last_updated: string;
   now: string;
-  user: User;
-  for: For;
-  seller: Seller;
+  user: UpdatedItemEventUser;
+  for: UpdatedItemEventFor;
+  seller: UpdatedItemEventSeller;
 }
 
-interface Seller {
+interface UpdatedItemEventSeller {
   id: string;
   avatar: string;
   name: string;
@@ -133,16 +136,113 @@ interface Seller {
   failed_trades: number;
 }
 
-interface For {
+interface UpdatedItemEventFor {
   avatar: string;
   name: string;
   steam_level: number;
   steam_joined: number;
 }
 
-interface User {
+interface UpdatedItemEventUser {
   id: string;
   avatar: string;
   name: string;
   can_p2p: boolean;
 }
+
+export type SteamTrade = {
+  type: string;
+  data: Data;
+};
+
+export type Data = {
+  id: string;
+  stage: number;
+  costum_id: string;
+  creator: string;
+  boxed: Date;
+  send_until: Date;
+  last_updated: Date;
+  done: boolean;
+  now: Date;
+  user: User;
+  merchant?: Merchant;
+  seller: Seller;
+  for: For;
+  items: Item[];
+};
+
+export type For = {
+  name: string;
+  avatar: string;
+  kyc_status: null;
+  steam_joined: number;
+  steam_level: null;
+};
+
+export type Item = {
+  id: number;
+  price: number;
+  name: string;
+  status: number;
+  merchant: string | null;
+  item_id: number;
+  trade_id: string;
+  image: string;
+  sent_time: Date;
+  inspect_item?: InspectItem;
+  steam_prices?: SteamPrices;
+};
+
+export type InspectItem = {
+  floatvalue: number;
+  rarity_name: string;
+  stickers?: Sticker[];
+};
+
+export type Sticker = {
+  name: string;
+  slot: number;
+  wear: number;
+  sticker_price?: StickerPrice;
+};
+
+export type StickerPrice = {
+  average: number;
+  img: string;
+};
+
+export type SteamPrices = {
+  rarity_color: string;
+  game_id: number;
+  collection: string;
+  collection_icon: string;
+};
+
+export type Merchant = {
+  merchant: string;
+  avatar: string;
+  currency_value: number;
+  currency_icon: string;
+  successlink: string;
+};
+
+export type Seller = {
+  id: string;
+  name: string;
+  avatar: string;
+  can_p2p: boolean;
+  kyc_status: null;
+  shop: string;
+  auto: boolean;
+  success_trades: number;
+  failed_trades: number;
+};
+
+export type User = {
+  id: string;
+  name: string;
+  avatar: string;
+  can_p2p: boolean;
+  kyc_status: string;
+};

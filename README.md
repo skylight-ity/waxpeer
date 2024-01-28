@@ -20,7 +20,11 @@ const WP = new Waxpeer(WAXPEER_API);
 //Trade websocket
 const TS = new TradeWebsocket(WAXPEER_API, STEAM_ID, TRADELINK);
 //Website websocket
-const WS = new WebsiteWebsocket(WAXPEER_API, ['add_item', 'remove', 'update_item']);
+const WS = new WebsiteWebsocket(WAXPEER_API, [
+  'add_item',
+  'remove',
+  'update_item',
+]);
 ```
 
 ### Fetch your user data
@@ -40,7 +44,9 @@ console.log(history);
 ### Change your tradelink
 
 ```typescript
-let data = await WP.changeTradeLink('https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk');
+let data = await WP.changeTradeLink(
+  'https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk'
+);
 console.log(data);
 ```
 
@@ -54,7 +60,12 @@ console.log(data);
 ### Buy items using item_id and send to specific tradelink
 
 ```typescript
-const purchase = await WP.buyItemWithId(17441538677, 798500, 'oFvyi0Ma', '378049039');
+const purchase = await WP.buyItemWithId(
+  17441538677,
+  798500,
+  'oFvyi0Ma',
+  '378049039'
+);
 console.log(purchase);
 ```
 
@@ -67,7 +78,7 @@ const purchase = await WP.buyItemWithName(
   'oFvyi0Ma',
   '378049039',
   null,
-  'csgo',
+  'csgo'
 );
 console.log(purchase);
 ```
@@ -124,7 +135,9 @@ console.log(items);
 ### Check tradelink validity
 
 ```typescript
-const data = await WP.validateTradeLink('https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk');
+const data = await WP.validateTradeLink(
+  'https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk'
+);
 console.log(data);
 ```
 
@@ -208,14 +221,24 @@ console.log(data);
 ### Active buy orders. Sorted by price DESC, if a filter by name is specified
 
 ```typescript
-const data = await WP.buyOrders(0, 'AK-47 | Redline (Field-Tested)', '1', 'csgo');
+const data = await WP.buyOrders(
+  0,
+  'AK-47 | Redline (Field-Tested)',
+  '1',
+  'csgo'
+);
 console.log(data);
 ```
 
 ### Create a buy order to auto purchase items. Currently independent of the p2p status of the user
 
 ```typescript
-const data = await WP.createBuyOrder('AK-47 | Redline (Field-Tested)', 5, 15000, 'csgo');
+const data = await WP.createBuyOrder(
+  'AK-47 | Redline (Field-Tested)',
+  5,
+  15000,
+  'csgo'
+);
 console.log(data);
 ```
 
@@ -267,7 +290,7 @@ console.log(data);
 const data = await WP.postMerchantUser(
   'my_merchant',
   'https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk',
-  '76561198000000000',
+  '76561198000000000'
 );
 console.log(data);
 ```
@@ -275,21 +298,32 @@ console.log(data);
 ### Merchant. Fetch user inventory
 
 ```typescript
-const data = await WP.MerchantInventoryUpdate('76561198000000000', 'my_merchant');
+const data = await WP.MerchantInventoryUpdate(
+  '76561198000000000',
+  'my_merchant'
+);
 console.log(data);
 ```
 
 ### Merchant. Get items that you can list for the user
 
 ```typescript
-const data = await WP.MerchantInventory('76561198000000000', 'my_merchant', 730);
+const data = await WP.MerchantInventory(
+  '76561198000000000',
+  'my_merchant',
+  730
+);
 console.log(data);
 ```
 
 ### Merchant. List steam items from inventory
 
 ```typescript
-const data = await WP.MerchantListItemsSteam('my_merchant', '76561198000000000', [{ item_id: 1, price: 1 }]);
+const data = await WP.MerchantListItemsSteam(
+  'my_merchant',
+  '76561198000000000',
+  [{ item_id: 1, price: 1 }]
+);
 console.log(data);
 ```
 
@@ -299,7 +333,7 @@ console.log(data);
 const data = await WP.MerchantDepositsHistory(
   'my_merchant',
   '76561198000000000',
-  'aaabe17b-dddd-4444-affd-dcad3fa6fbbe',
+  'aaabe17b-dddd-4444-affd-dcad3fa6fbbe'
 );
 console.log(data);
 ```
@@ -335,8 +369,8 @@ WS.on('update_item', (message: UpdateItemEvent) => {
 WS.on('change_user', (message: ChangeUserEvent) => {
   if (message.name === 'wallet') console.log(message); //balance change event
 });
-WS.on('updated_item', (message: UpdatedItemEvent) => {
-  console.log(message); //trade status change event
+WS.on('steamTrade', (message: ItemChangeEvent) => {
+  console.log(message); //waxpeer new item event
 });
 ```
 
