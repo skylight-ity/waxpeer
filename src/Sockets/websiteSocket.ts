@@ -1,6 +1,9 @@
 import EventEmitter from 'events';
 import io from 'socket.io-client';
-import { ItemChangeEvent, WebsiteSocketSubEvents } from '../types/sockets';
+import {
+  WebsiteSocketSubEvents,
+  WebsiteWebSocketEvents,
+} from '../types/sockets';
 
 export class WebsiteWebsocket extends EventEmitter {
   private apiKey: string;
@@ -27,11 +30,10 @@ export class WebsiteWebsocket extends EventEmitter {
 
     socket.on('connect', () => {
       this.socketOpen = true;
-      this.subEvents.map((sub) => {
-        socket.emit('sub', { name: sub, value: true });
-      });
+      this.subEvents.map((e) => socket.emit('subscribe', { name: e }));
       console.log('WebsiteWebsocket connected');
     });
+    socket.on('error', (err) => this.emit('error', err));
     socket.on('disconnect', () => {
       this.socketOpen = false;
       console.log('WebsiteWebsocket disconnected');
@@ -39,19 +41,11 @@ export class WebsiteWebsocket extends EventEmitter {
     socket.on('handshake', (data) => {
       this.emit('handshake', data);
     });
-    socket.on('add_item', (data: ItemChangeEvent) => {
-      this.emit('add_item', data);
-    });
-    socket.on('update_item', (data) => {
-      this.emit('update_item', data);
-    });
-    socket.on('updated_item', (data) => {
-      this.emit('updated_item', data);
-    });
+    socket.on('new', (data) => this.emit('new', data));
+    socket.on('update', (data) => this.emit('update', data));
+    socket.on('removed', (data) => this.emit('removed', data));
     socket.on('steamTrade', (data) => this.emit('steamTrade', data));
-    socket.on('remove', (data) => {
-      this.emit('remove_item', data);
-    });
+
     socket.on('change_user', (data) => {
       this.emit('change_user', data);
     });
@@ -59,5 +53,11 @@ export class WebsiteWebsocket extends EventEmitter {
       this.socketOpen = false;
       console.log('connect_error', err);
     });
+  }
+  on<K extends keyof WebsiteWebSocketEvents>(
+    event: K,
+    listener: (payload: WebsiteWebSocketEvents[K]) => void
+  ): this {
+    return super.on(event, listener);
   }
 }

@@ -1,4 +1,41 @@
 import { EGameId } from './waxpeer';
+export interface WebsiteWebSocketEvents {
+  handshake: HandshakeEventPayload;
+  new: IInventoryEmit;
+  removed: IInventoryEmit;
+  update: IInventoryEmit;
+  change_user: UserChangePayload;
+  error: any;
+  steamTrade: SteamTrade;
+}
+interface HandshakeEventPayload {
+  id: string | null;
+  message?: 'No authentication or session';
+}
+interface BaseNewEventPayload {
+  game: string;
+  classid?: number;
+  steam_price?: number;
+  item_id: string;
+  price: number;
+  name: string;
+}
+type CSGOInventory = {
+  game: 'csgo';
+  float: number;
+  sticker_names: string[];
+  paint_index: number;
+};
+type IInventoryEmit = BaseNewEventPayload &
+  (CSGOInventory | { game: Exclude<string, 'csgo'> });
+interface UserChangePayload {
+  wallet?: number;
+  kyc_status?: string;
+  name?: string;
+  avatar?: string;
+  ban?: boolean;
+  last_login?: string;
+}
 
 export interface TradeWebsocketCreateTrade {
   name: 'send-trade';
@@ -58,9 +95,13 @@ export interface TradeWebsocketAcceptWithdrawData {
 }
 
 export enum WebsiteSocketSubEvents {
-  add_item = 'add_item',
-  remove = 'remove',
-  update_item = 'update_item',
+  add_item = 'add_item', // deprecated
+  remove = 'remove', // deprecated
+  csgo = 'csgo',
+  rust = 'rust',
+  dota2 = 'dota2',
+  tf2 = 'tf2',
+  update_item = 'update_item', // deprecated
 }
 
 export enum WebsiteSocketEvents {
@@ -90,15 +131,6 @@ export interface UpdateItemEvent {
   item_id: string;
   name: string;
 }
-
-export interface ChangeUserEvent {
-  wallet?: number;
-  kyc_status?: string;
-  name?: string;
-  avatar?: string;
-  ban?: boolean;
-}
-
 export interface UpdatedItemEvent {
   id: number;
   costum_id: string;

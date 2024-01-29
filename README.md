@@ -355,22 +355,23 @@ TS.on('accept_withdraw', (message: TradeWebsocketAcceptWithdrawData) => {
 ### Website websocket events
 
 ```typescript
-//manual sub events
-WS.on('add_item', (message: ItemChangeEvent) => {
+//manual sub events [csgo,rust,tf2,dota2]
+WS.on('new', (message: IInventoryEmit) => {
   console.log(message); //waxpeer new item event
 });
-WS.on('remove', (message: ItemChangeEvent) => {
+WS.on('update', (message: IInventoryEmit) => {
   console.log(message); //waxpeer item removed event
 });
-WS.on('update_item', (message: UpdateItemEvent) => {
-  console.log(message); //waxpeer item price change event
+WS.on('removed', (message: IInventoryEmit) => {
+  console.log(message); //waxpeer item removed event
 });
+
 //auto sub after auth
 WS.on('change_user', (message: ChangeUserEvent) => {
-  if (message.name === 'wallet') console.log(message); //balance change event
+  if (message.name === 'wallet') console.log(message); // user change event
 });
-WS.on('steamTrade', (message: ItemChangeEvent) => {
-  console.log(message); //waxpeer new item event
+WS.on('steamTrade', (message: SteamTrade) => {
+  console.log(message); //waxpeer trade event
 });
 ```
 
