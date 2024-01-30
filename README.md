@@ -20,11 +20,7 @@ const WP = new Waxpeer(WAXPEER_API);
 //Trade websocket
 const TS = new TradeWebsocket(WAXPEER_API, STEAM_ID, TRADELINK);
 //Website websocket
-const WS = new WebsiteWebsocket(WAXPEER_API, [
-  'add_item',
-  'remove',
-  'update_item',
-]);
+const WS = new WebsiteWebsocket(WAXPEER_API, ['csgo']);
 ```
 
 ### Fetch your user data
