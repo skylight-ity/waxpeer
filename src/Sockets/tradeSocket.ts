@@ -11,6 +11,7 @@ export class TradeWebsocket extends EventEmitter {
     int: null,
   };
   public socketOpen = false;
+  private allowReconnect = true;
   constructor(apiKey: string, steamid: string, tradelink: string) {
     super();
     this.apiKey = apiKey;
@@ -19,6 +20,7 @@ export class TradeWebsocket extends EventEmitter {
     this.connectWss();
   }
   async connectWss() {
+    this.allowReconnect = true;
     if (this.w && this.w.ws) this.w.ws.close();
     let t = (this.w.tries + 1) * 1e3;
     this.w.ws = new WebSocket('wss://wssex.waxpeer.com');
@@ -30,7 +32,7 @@ export class TradeWebsocket extends EventEmitter {
       this.w.tries += 1;
       this.socketOpen = false;
       console.log(`TradeWebsocket closed`, this.steamid);
-      if (this.steamid && this.apiKey) {
+      if (this.steamid && this.apiKey && this.allowReconnect) {
         setTimeout(
           function () {
             return this.connectWss(this.steamid, this.apiKey, this.tradelink);
@@ -77,5 +79,12 @@ export class TradeWebsocket extends EventEmitter {
         }
       } catch {}
     });
+  }
+  disconnectWss() {
+    if (this.w && this.w.ws) {
+      this.w.ws.close();
+      this.socketOpen = false;
+      this.allowReconnect = false;
+    }
   }
 }
