@@ -1,6 +1,6 @@
 {
   "name": "waxpeer",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "description": "Waxpeer API wrapper for NodeJs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
