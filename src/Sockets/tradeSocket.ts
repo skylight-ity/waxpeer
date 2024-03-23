@@ -29,7 +29,12 @@ export class TradeWebsocket extends EventEmitter {
   }
   async connectWss() {
     this.allowReconnect = true;
-    if (this.w && this.w.ws && this.w.ws.readyState !== this.readyStatesMap.CLOSED) this.w.ws.terminate();
+    if (
+      this.w &&
+      this.w.ws &&
+      this.w.ws.readyState !== this.readyStatesMap.CLOSED
+    )
+      this.w.ws.terminate();
     let t = (this.w.tries + 1) * 1e3;
     this.w.ws = new WebSocket('wss://wssex.waxpeer.com');
     this.w.ws.on('error', (e) => {
@@ -49,7 +54,7 @@ export class TradeWebsocket extends EventEmitter {
             return this.connectWss(this.steamid, this.apiKey, this.tradelink);
           }
         }.bind(this),
-        t,
+        t
       );
     });
     this.w.ws.on('open', (e) => {
@@ -64,7 +69,7 @@ export class TradeWebsocket extends EventEmitter {
             tradeurl: this.tradelink,
             source: 'npm_waxpeer',
             version: '1.5.8',
-          }),
+          })
         );
         this.w.int = setInterval(() => {
           if (this.w?.ws && this.w.ws.readyState === this.readyStatesMap.OPEN)

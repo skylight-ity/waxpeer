@@ -33,18 +33,18 @@
   },
   "homepage": "https://github.com/skylight-ity/waxpeer#readme",
   "devDependencies": {
+    "@types/node": "^18.11.13",
+    "@types/ws": "^8.5.10",
     "ts-node": "^10.9.1",
     "tsc-watch": "^6.0.0",
-    "typescript": "^3.6.3"
+    "typescript": "^3.9.10"
   },
   "dependencies": {
-    "@types/node": "^18.11.13",
     "axios": "^1.6.0",
     "dotenv": "^8.2.0",
     "limiter": "^2.1.0",
     "qs": "^6.11.0",
     "socket.io-client": "4.7.4",
-    "tsc": "^1.20150623.0",
-    "ws": "^8.11.0"
+    "ws": "^8.16.0"
   }
 }
