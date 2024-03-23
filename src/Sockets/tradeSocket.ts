@@ -10,8 +10,13 @@ export class TradeWebsocket extends EventEmitter {
     tries: 0,
     int: null,
   };
-  public socketOpen = false;
   private allowReconnect = true;
+  private readonly readyStatesMap = {
+    CONNECTING: 0,
+    OPEN: 1,
+    CLOSING: 2,
+    CLOSED: 3,
+  };
   constructor(apiKey: string, steamid: string, tradelink: string) {
     super();
     this.apiKey = apiKey;
@@ -19,30 +24,35 @@ export class TradeWebsocket extends EventEmitter {
     this.tradelink = tradelink;
     this.connectWss();
   }
+  socketOpen() {
+    return this.w.ws?.readyState === this.readyStatesMap.OPEN;
+  }
   async connectWss() {
     this.allowReconnect = true;
-    if (this.w && this.w.ws) this.w.ws.close();
+    if (this.w && this.w.ws && this.w.ws.readyState !== this.readyStatesMap.CLOSED) this.w.ws.terminate();
     let t = (this.w.tries + 1) * 1e3;
     this.w.ws = new WebSocket('wss://wssex.waxpeer.com');
     this.w.ws.on('error', (e) => {
       console.log('TradeWebsocket error', e);
-      this.w.ws.close();
     });
     this.w.ws.on('close', (e) => {
       this.w.tries += 1;
-      this.socketOpen = false;
       console.log(`TradeWebsocket closed`, this.steamid);
-      if (this.steamid && this.apiKey && this.allowReconnect) {
-        setTimeout(
-          function () {
+      setTimeout(
+        function () {
+          if (
+            this.steamid &&
+            this.apiKey &&
+            this.allowReconnect &&
+            this.w?.ws?.readyState !== this.readyStatesMap.OPEN
+          ) {
             return this.connectWss(this.steamid, this.apiKey, this.tradelink);
-          }.bind(this),
-          t,
-        );
-      }
+          }
+        }.bind(this),
+        t,
+      );
     });
     this.w.ws.on('open', (e) => {
-      this.socketOpen = true;
       console.log(`TradeWebsocket opened`, this.steamid);
       if (this.steamid) {
         clearInterval(this.w.int);
@@ -53,11 +63,12 @@ export class TradeWebsocket extends EventEmitter {
             apiKey: this.apiKey,
             tradeurl: this.tradelink,
             source: 'npm_waxpeer',
-            version: '1.3.0',
+            version: '1.5.8',
           }),
         );
         this.w.int = setInterval(() => {
-          if (this.w.ws) this.w.ws.send(JSON.stringify({ name: 'ping' }));
+          if (this.w?.ws && this.w.ws.readyState === this.readyStatesMap.OPEN)
+            this.w.ws.send(JSON.stringify({ name: 'ping' }));
         }, 25000);
       } else {
         this.w.ws.close();
@@ -82,9 +93,9 @@ export class TradeWebsocket extends EventEmitter {
   }
   disconnectWss() {
     if (this.w && this.w.ws) {
-      this.w.ws.close();
-      this.socketOpen = false;
+      clearInterval(this.w.int);
       this.allowReconnect = false;
+      this.w.ws.close();
     }
   }
 }
