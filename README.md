@@ -368,7 +368,7 @@ WS.on('removed', (message: IInventoryEmit) => {
 });
 
 //auto sub after auth
-WS.on('user_change', (message: ChangeUserEvent) => {
+WS.on('change_user', (message: ChangeUserEvent) => {
   if (message.name === 'wallet') console.log(message); // user change event
 });
 WS.on('steamTrade', (message: SteamTrade) => {
