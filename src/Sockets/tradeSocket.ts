@@ -63,7 +63,7 @@ export class TradeWebsocket extends EventEmitter {
             apiKey: this.apiKey,
             tradeurl: this.tradelink,
             source: 'npm_waxpeer',
-            version: '1.5.8',
+            info: { version: '1.6.0' },
           }),
         );
         this.w.int = setInterval(() => {
@@ -88,7 +88,12 @@ export class TradeWebsocket extends EventEmitter {
         if (jMsg.name === 'accept_withdraw') {
           this.emit('accept_withdraw', jMsg.data);
         }
-      } catch {}
+        if (jMsg.name === 'user_change') {
+          this.emit('user_change', jMsg.data);
+        }
+      } catch (e) {
+        console.log(e);
+      }
     });
   }
   disconnectWss() {

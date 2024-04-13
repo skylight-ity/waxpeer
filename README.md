@@ -1,8 +1,18 @@
-[WaxPeer](https://waxpeer.com) API wrapper for Node.js
+[Waxpeer](https://waxpeer.com) API wrapper for Node.js
 
 Full API documentation [here](https://api.waxpeer.com/docs)
 
 Trade websocket documentation [here](https://docs.waxpeer.com/?method=websocket)
+
+# Breaking changes due to Steam API update
+
+Now in order to go online and sell items safely you need to implement the following logic:
+
+1. Make sure that you have enabled the collection of user data on the website under the "Sell items" tab (by default it is enabled).
+2. Going online now requires a valid Steam access token because the API key functionality has been limited. You need to send it once an hour or immediately after an refresh (the token is active only 24 hours after refreshing in Steam), otherwise it will expire and all your items will be disabled from sale, and active trades will be considered stalled and may be canceled.
+3. We categorically recommend not to make a mobile confirmation for a created trade until you send its trade id using the callback method.
+4. Online may be delayed until the access token is verified or a valid token is received. Therefore, please note that in the trade socket there is a new `user_change` event, in which `can_p2p` indicates whether you are online or not when it is changed by p2p controller.
+5. If you do not want to use this package, but will be implementing your own trade socket connection, make sure you specify the `source` parameter on the authentification event (`auth`) without which the account will not be able to get online (example: "source": "myAwesomeProject").
 
 ## Installation
 
@@ -10,17 +20,34 @@ Trade websocket documentation [here](https://docs.waxpeer.com/?method=websocket)
 $ npm install waxpeer
 ```
 
-### Initialization
+## Initialization with the new requirements
 
 ```typescript
 import { Waxpeer, TradeWebsocket, WebsiteWebsocket } from 'waxpeer';
 
 //API wrapper
 const WP = new Waxpeer(WAXPEER_API);
+
 //Trade websocket
+const tokenUpd = await WP.UserSteamToken(
+    btoa(
+      'eyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXfsd23123123.2B9wKjf2323-S3i3ctdCg', //your Steam access token, which must be valid for more than an hour (the token is active only 24 hours after refreshing in Steam) and belong to the account from which you are trying to go online.
+    ),
+  );
+if (!tokenUpd?.success) //most likely you need to refresh access token and try again with a new token
 const TS = new TradeWebsocket(WAXPEER_API, STEAM_ID, TRADELINK); //auto connect after init
 TS.disconnectWss(); //disconnect
 TS.connectWss(); //connect
+TS.on('user_change', ({can_p2p}: TradeWebsocketChangeUser) => { //new online change event
+  console.log(can_p2p); //example: true
+});
+TS.on('send-trade', (message: TradeWebsocketCreateTradeData) => {
+  console.log(message);
+  //you create a trade in steam and have a tradeid from Steam response
+  const callback = await WP.steamTrade(tradeid, message.waxid);
+  if(!callback?.success) //if the response is not successful (success is false) you need to update your Steam access token and cancel the trade (if it was created) without performing mobile confirmation.
+  //if the answer is successful, you can do mobile confirmation
+});
 
 //Website websocket
 const WS = new WebsiteWebsocket(WAXPEER_API, ['csgo']); //auto connect after init
@@ -321,6 +348,9 @@ TS.on('cancelTrade', (message: TradeWebsocketCancelTradeData) => {
 TS.on('accept_withdraw', (message: TradeWebsocketAcceptWithdrawData) => {
   console.log(message);
 });
+TS.on('user_change', ({ can_p2p }: TradeWebsocketChangeUser) => {
+  console.log(can_p2p); //example: true
+});
 ```
 
 ### Website websocket events
@@ -338,7 +368,7 @@ WS.on('removed', (message: IInventoryEmit) => {
 });
 
 //auto sub after auth
-WS.on('change_user', (message: ChangeUserEvent) => {
+WS.on('user_change', (message: ChangeUserEvent) => {
   if (message.name === 'wallet') console.log(message); // user change event
 });
 WS.on('steamTrade', (message: SteamTrade) => {
