@@ -7,6 +7,7 @@ export interface WebsiteWebSocketEvents {
   change_user: UserChangePayload;
   error: any;
   steamTrade: SteamTrade;
+  inspect: any;
 }
 interface HandshakeEventPayload {
   id: string | null;
@@ -26,8 +27,7 @@ type CSGOInventory = {
   sticker_names: string[];
   paint_index: number;
 };
-type IInventoryEmit = BaseNewEventPayload &
-  (CSGOInventory | { game: Exclude<string, 'csgo'> });
+type IInventoryEmit = BaseNewEventPayload & (CSGOInventory | { game: Exclude<string, 'csgo'> });
 interface UserChangePayload {
   wallet?: number;
   kyc_status?: string;
@@ -92,6 +92,15 @@ export interface TradeWebsocketAcceptWithdraw {
 export interface TradeWebsocketAcceptWithdrawData {
   tradeid: string; //5525585555
   partner: string; //76561199059254XXX
+}
+
+export interface TradeWebsocketChangeUser {
+  name: 'change_user';
+  data: UserOnlineChangePayload;
+}
+
+interface UserOnlineChangePayload {
+  can_p2p: boolean;
 }
 
 export enum WebsiteSocketSubEvents {
