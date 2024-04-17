@@ -35,7 +35,7 @@ const tokenUpd = await WP.UserSteamToken(
     ),
   );
 if (!tokenUpd?.success) //most likely you need to refresh access token and try again with a new token
-const TS = new TradeWebsocket(WAXPEER_API, STEAM_ID, TRADELINK); //auto connect after init
+const TS = new TradeWebsocket(STEAM_API, STEAM_ID, TRADELINK); //auto connect after init
 TS.disconnectWss(); //disconnect
 TS.connectWss(); //connect
 TS.on('user_change', ({can_p2p}: TradeWebsocketChangeUser) => { //new online change event
