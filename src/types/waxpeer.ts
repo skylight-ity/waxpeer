@@ -155,24 +155,27 @@ export interface SteamPrice {
 }
 
 export interface IUser {
-  success?: boolean;
+  success: boolean;
   user?: User;
 }
 
 export interface User {
-  wallet?: number;
-  id?: string;
-  id64?: string;
-  avatar?: string;
-  name?: string;
-  sell_fees?: number;
-  can_p2p?: boolean;
-  eth_wallet?: string;
-  btc_wallet?: string;
-  ltc_wallet?: string;
-  tradelink?: string;
-  expresslink?: string;
-  user_id?: string;
+  wallet: number;
+  id: string;
+  user_id: string;
+  id64: string;
+  avatar: string;
+  proxy: null | any;
+  rank: number;
+  shop: string;
+  ref: string;
+  name: string;
+  sell_status: boolean;
+  sell_fees: number;
+  can_p2p: boolean;
+  login: null | any;
+  tradelink: string;
+  steam_api: string;
 }
 
 export interface ISetMyKeys {

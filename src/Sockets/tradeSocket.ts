@@ -63,7 +63,7 @@ export class TradeWebsocket extends EventEmitter {
             apiKey: this.apiKey,
             tradeurl: this.tradelink,
             source: 'npm_waxpeer',
-            info: { version: '1.6.0' },
+            info: { version: '1.6.1' },
           }),
         );
         this.w.int = setInterval(() => {
