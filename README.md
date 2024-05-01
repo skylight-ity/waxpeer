@@ -28,14 +28,17 @@ import { Waxpeer, TradeWebsocket, WebsiteWebsocket } from 'waxpeer';
 //API wrapper
 const WP = new Waxpeer(WAXPEER_API);
 
-//Trade websocket
 const tokenUpd = await WP.UserSteamToken(
-    btoa(
-      'eyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXfsd23123123.2B9wKjf2323-S3i3ctdCg', //your Steam access token, which must be valid for more than an hour (the token is active only 24 hours after refreshing in Steam) and belong to the account from which you are trying to go online.
+  btoa(
+    'eyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXfsd23123123.2B9wKjf2323-S3i3ctdCg', //your Steam access token, which must be valid for more than an hour (the token is active only 24 hours after refreshing in Steam) and belong to the account from which you are trying to go online.
     ),
   );
 if (!tokenUpd?.success) //most likely you need to refresh access token and try again with a new token
-const TS = new TradeWebsocket(STEAM_API, STEAM_ID, TRADELINK); //auto connect after init
+//Trade websocket
+const TS = new TradeWebsocket(STEAM_API, STEAM_ID, TRADELINK, WAX_API, ACCESS_TOKEN); //auto connect after init. At least one of [STEAM_API, WAX_API, ACCESS_TOKEN] is required!
+// const TS = new TradeWebsocket(null, STEAM_ID, TRADELINK, WAX_API); //example with waxApi to be able sell from limited account BUT not Rust game
+// const TS = new TradeWebsocket(null, STEAM_ID, TRADELINK, null, ACCESS_TOKEN); //example with waxApi to be able sell from limited account BUT not Rust game
+
 TS.disconnectWss(); //disconnect
 TS.connectWss(); //connect
 TS.on('user_change', ({can_p2p}: TradeWebsocketChangeUser) => { //new online change event
