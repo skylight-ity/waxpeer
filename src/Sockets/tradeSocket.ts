@@ -2,9 +2,11 @@ import { EventEmitter } from 'events';
 import WebSocket from 'ws';
 
 export class TradeWebsocket extends EventEmitter {
-  private apiKey: string;
+  private apiKey?: string;
   private steamid: string;
   private tradelink: string;
+  private waxApi?: string;
+  private accessToken?: string;
   private w = {
     ws: null,
     tries: 0,
@@ -17,11 +19,26 @@ export class TradeWebsocket extends EventEmitter {
     CLOSING: 2,
     CLOSED: 3,
   };
-  constructor(apiKey: string, steamid: string, tradelink: string) {
+
+  /**
+   * Represents a TradeSocket object.
+   * @constructor
+   * @param {string} [apiKey] - The Steam API key.
+   * @param {string} steamid - The Steam ID.
+   * @param {string} tradelink - The trade link.
+   * @param {string} [waxApi] - The Waxpeer API.
+   * @param {string} [accessToken] - The access token as string NOT encoded.
+   * @throws {Error} If Steam API or Waxpeer API or access token is not provided.
+   */
+  constructor(apiKey: string, steamid: string, tradelink: string, waxApi?: string, accessToken?: string) {
     super();
     this.apiKey = apiKey;
     this.steamid = steamid;
     this.tradelink = tradelink;
+    this.waxApi = waxApi;
+    this.accessToken = accessToken;
+    if (!this.apiKey && !this.waxApi && !this.accessToken)
+      throw new Error('Steam API or Waxpeer API or access token is required');
     this.connectWss();
   }
   socketOpen() {
@@ -56,16 +73,26 @@ export class TradeWebsocket extends EventEmitter {
       console.log(`TradeWebsocket opened`, this.steamid);
       if (this.steamid) {
         clearInterval(this.w.int);
-        this.w.ws.send(
-          JSON.stringify({
-            name: 'auth',
-            steamid: this.steamid,
-            apiKey: this.apiKey,
-            tradeurl: this.tradelink,
-            source: 'npm_waxpeer',
-            info: { version: '1.6.1' },
-          }),
-        );
+        let authObject: {
+          name: string;
+          steamid: string;
+          tradeurl: string;
+          source: string;
+          info: { version: string };
+          apiKey?: string;
+          waxApi?: string;
+          accessToken?: string;
+        } = {
+          name: 'auth',
+          steamid: this.steamid,
+          tradeurl: this.tradelink,
+          source: 'npm_waxpeer',
+          info: { version: '1.6.2' },
+        };
+        if (this.apiKey) authObject.apiKey = this.apiKey;
+        if (this.waxApi) authObject.waxApi = this.waxApi;
+        if (this.accessToken) authObject.accessToken = this.accessToken;
+        this.w.ws.send(JSON.stringify(authObject));
         this.w.int = setInterval(() => {
           if (this.w?.ws && this.w.ws.readyState === this.readyStatesMap.OPEN)
             this.w.ws.send(JSON.stringify({ name: 'ping' }));
