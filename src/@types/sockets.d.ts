@@ -1,5 +1,4 @@
-import { EGameId } from './waxpeer';
-export interface WebsiteWebSocketEvents {
+interface WebsiteWebSocketEvents {
   handshake: HandshakeEventPayload;
   new: IInventoryEmit;
   removed: IInventoryEmit;
@@ -21,13 +20,12 @@ interface BaseNewEventPayload {
   price: number;
   name: string;
 }
-type CSGOInventory = {
+interface CSGOInventory {
   game: 'csgo';
   float: number;
   sticker_names: string[];
   paint_index: number;
-};
-type IInventoryEmit = BaseNewEventPayload & (CSGOInventory | { game: Exclude<string, 'csgo'> });
+}
 interface UserChangePayload {
   wallet?: number;
   kyc_status?: string;
@@ -37,12 +35,12 @@ interface UserChangePayload {
   last_login?: string;
 }
 
-export interface TradeWebsocketCreateTrade {
+interface TradeWebsocketCreateTrade {
   name: 'send-trade';
   data: TradeWebsocketCreateTradeData;
 }
 
-export interface TradeWebsocketCreateTradeData {
+interface TradeWebsocketCreateTradeData {
   waxid: string;
   wax_id: string;
   json_tradeoffer: TradeWebsocketCreateTradeJsonTradeoffer;
@@ -74,27 +72,27 @@ interface TradeWebsocketAsset {
   assetid: string;
 }
 
-export interface TradeWebsocketCancelTrade {
+interface TradeWebsocketCancelTrade {
   name: 'cancelTrade';
   data: TradeWebsocketCancelTradeData;
 }
 
-export interface TradeWebsocketCancelTradeData {
+interface TradeWebsocketCancelTradeData {
   trade_id: string;
   seller_steamid: string;
 }
 
-export interface TradeWebsocketAcceptWithdraw {
+interface TradeWebsocketAcceptWithdraw {
   name: string;
   data: TradeWebsocketAcceptWithdrawData;
 }
 
-export interface TradeWebsocketAcceptWithdrawData {
+interface TradeWebsocketAcceptWithdrawData {
   tradeid: string; //5525585555
   partner: string; //76561199059254XXX
 }
 
-export interface TradeWebsocketChangeUser {
+interface TradeWebsocketChangeUser {
   name: 'change_user';
   data: UserOnlineChangePayload;
 }
@@ -103,7 +101,7 @@ interface UserOnlineChangePayload {
   can_p2p: boolean;
 }
 
-export enum WebsiteSocketSubEvents {
+enum WebsiteSocketSubEvents {
   add_item = 'add_item', // deprecated
   remove = 'remove', // deprecated
   csgo = 'csgo',
@@ -113,7 +111,7 @@ export enum WebsiteSocketSubEvents {
   update_item = 'update_item', // deprecated
 }
 
-export enum WebsiteSocketEvents {
+enum WebsiteSocketEvents {
   add_item = 'add_item',
   remove = 'remove',
   update_item = 'update_item',
@@ -122,7 +120,7 @@ export enum WebsiteSocketEvents {
   change_user = 'change_user',
 }
 
-export interface ItemChangeEvent {
+interface ItemChangeEvent {
   name: string;
   market_name?: string;
   price: number;
@@ -135,12 +133,12 @@ export interface ItemChangeEvent {
   game?: keyof typeof EGameId;
 }
 
-export interface UpdateItemEvent {
+interface UpdateItemEvent {
   price: number;
   item_id: string;
   name: string;
 }
-export interface UpdatedItemEvent {
+interface UpdatedItemEvent {
   id: number;
   costum_id: string;
   project_id: string;
@@ -191,12 +189,12 @@ interface UpdatedItemEventUser {
   can_p2p: boolean;
 }
 
-export type SteamTrade = {
+interface SteamTrade {
   type: string;
   data: Data;
-};
+}
 
-export type Data = {
+interface Data {
   id: string;
   stage: number;
   costum_id: string;
@@ -211,17 +209,17 @@ export type Data = {
   seller: Seller;
   for: For;
   items: Item[];
-};
+}
 
-export type For = {
+interface For {
   name: string;
   avatar: string;
   kyc_status: null;
   steam_joined: number;
   steam_level: null;
-};
+}
 
-export type Item = {
+interface Item {
   id: number;
   price: number;
   name: string;
@@ -233,42 +231,42 @@ export type Item = {
   sent_time: Date;
   inspect_item?: InspectItem;
   steam_prices?: SteamPrices;
-};
+}
 
-export type InspectItem = {
+interface InspectItem {
   floatvalue: number;
   rarity_name: string;
   stickers?: Sticker[];
-};
+}
 
-export type Sticker = {
+interface Sticker {
   name: string;
   slot: number;
   wear: number;
   sticker_price?: StickerPrice;
-};
+}
 
-export type StickerPrice = {
+interface StickerPrice {
   average: number;
   img: string;
-};
+}
 
-export type SteamPrices = {
+interface SteamPrices {
   rarity_color: string;
   game_id: number;
   collection: string;
   collection_icon: string;
-};
+}
 
-export type Merchant = {
+interface Merchant {
   merchant: string;
   avatar: string;
   currency_value: number;
   currency_icon: string;
   successlink: string;
-};
+}
 
-export type Seller = {
+interface Seller {
   id: string;
   name: string;
   avatar: string;
@@ -278,12 +276,12 @@ export type Seller = {
   auto: boolean;
   success_trades: number;
   failed_trades: number;
-};
+}
 
-export type User = {
+interface User {
   id: string;
   name: string;
   avatar: string;
   can_p2p: boolean;
   kyc_status: string;
-};
+}

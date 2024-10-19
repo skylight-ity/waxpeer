@@ -1,6 +1,5 @@
 import EventEmitter from 'events';
 import io, { Socket } from 'socket.io-client';
-import { WebsiteSocketSubEvents, WebsiteWebSocketEvents } from '../types/sockets';
 
 export class WebsiteWebsocket extends EventEmitter {
   private apiKey: string;
