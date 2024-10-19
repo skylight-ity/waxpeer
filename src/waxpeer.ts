@@ -1,49 +1,5 @@
 import axios from 'axios';
 import qs from 'qs';
-import {
-  EDopplersPhases,
-  EGameId,
-  EMinExteriors,
-  EWeapon,
-  EWeaponBrand,
-  FetchInventory,
-  GetItems,
-  GetMySteamInv,
-  IAvailable,
-  IBuy,
-  IBuyMyHistory,
-  IBuyOrderHistory,
-  IBuyOrders,
-  ICheckTradeLink,
-  ICheckWssUser,
-  ICreateBuyOrder,
-  IEditBuyOrder,
-  IEditItemsReq,
-  IGetItemsList,
-  IGetSteamItems,
-  IHistory,
-  IListedItem,
-  IMassInfo,
-  IMerchantDepositsHistory,
-  IMerchantInventory,
-  IMerchantInventoryUpate,
-  IMerchantListItem,
-  IMerchantListItemsSteam,
-  IMerchantUser,
-  IMyHistory,
-  IPrices,
-  IPricesDopplers,
-  IReadyTransferTrade,
-  IRemoveAll,
-  IRemoveAllOrders,
-  IRemoveBuyOrder,
-  IResponseEdit,
-  ISetMyKeys,
-  IUser,
-  ListedItem,
-  ListItems,
-  TradesStatus,
-} from './types/waxpeer';
 const RateLimiter = require('limiter').RateLimiter;
 
 export class Waxpeer {
@@ -858,6 +814,30 @@ export class Waxpeer {
   }
 
   /**
+   * Create a new user and obtain a unique API key or get an API key from an already created account without Steam OAuth - `/v1/user`
+   * Both accounts must be unrestricted on Waxpeer.
+   * Target account must be new on Waxpeer or have no active 2fa and enabled the collection of account information (You can enable it on the site if it is turned off).
+   * The token will not be used as a cookie in Steam during the API key creation/get process.
+   * @param api Your WAXPEER API of creator account
+   * @param token Your Steam access token from the target account. Token should be in base64 format and belong to your target account.
+   * @example
+   * // example response:
+   * {
+   *  "success": boolean,
+   *  "data": {
+   *    "api": "string",
+   *    "isNew": "boolean",
+   *  },
+   *  "msg": "string",
+   *  "exp": number
+   * }
+   *
+   */
+  public createUser(token: string): Promise<CreateUser> {
+    return this.post(`user`, { token });
+  }
+
+  /**
    * Removes all listed items - `/remove-all`
    *
    * @param game (optional) Game from supported games (If not passed - will remove for all games)
@@ -1330,7 +1310,7 @@ export class Waxpeer {
         })
       ).data;
     } catch (e) {
-      throw e;
+      throw e?.message;
     }
   }
 
@@ -1347,7 +1327,7 @@ export class Waxpeer {
         })
       ).data;
     } catch (e) {
-      throw e;
+      throw e?.message;
     }
   }
   private newAxiosCancelationSource(ms: number = 1) {
