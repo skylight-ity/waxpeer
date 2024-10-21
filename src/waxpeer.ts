@@ -511,7 +511,7 @@ export class Waxpeer {
    */
   public checkItemAvailability(
     item_id: string | number | string[] | number[],
-  ): Promise<{ success: boolean; data: IAvailable[] }> {
+  ): Promise<{ success: boolean; items: IAvailable[] }> {
     let ids = typeof item_id === 'object' ? item_id : [item_id];
     return this.get(`check-availability`, ids.map((i) => `item_id=${i}`).join('&'));
   }
