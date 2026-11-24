@@ -120,7 +120,7 @@ export class Waxpeer {
   ): Promise<IBuy> {
     return this.get(
       'buy-one-p2p-name',
-      qs.stringify({ name: encodeURIComponent(name), price, token, partner, project_id, game }),
+      qs.stringify({ name, price, token, partner, project_id, game }),
     );
   }
 
@@ -352,7 +352,7 @@ export class Waxpeer {
         game,
         min_price,
         max_price,
-        search: typeof search === 'string' && search?.length ? encodeURIComponent(search) : undefined,
+        search: typeof search === 'string' && search?.length ? search : undefined,
         minified,
         highest_offer,
         single,
