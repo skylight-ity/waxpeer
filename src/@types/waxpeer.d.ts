@@ -105,8 +105,19 @@ interface IBuyOrdersOffer {
 interface ICreateBuyOrder {
   success: boolean;
   msg?: string;
-  filled?: number;
   id?: number;
+  order?: {
+    id: number;
+    name: string;
+    game: string;
+    price: number;
+    amount: number;
+    filled: number;
+    allow_trade_locked: boolean;
+    filters: Record<string, unknown> | null;
+    created?: string;
+    last_update?: string;
+  };
 }
 
 interface IEditBuyOrder {
@@ -216,11 +227,11 @@ interface IBuyMyHistory {
 
 interface History {
   trade_id: null | string;
-  token: string;
-  partner: number;
+  tradelink: string;
+  for_steamid64: string;
   created: string;
   send_until: string;
-  reason: Reason;
+  reason: Reason | null;
   id: number;
   item_id: string;
   image: string;
@@ -333,7 +344,10 @@ interface IMerchantUserObject {
 interface IMerchantInventoryUpate {
   success: boolean;
   msg?: string;
-  count?: number;
+  error_message?: string;
+  total_inventory_count?: number;
+  availableItems?: number;
+  newItems?: number;
 }
 
 interface IMerchantInventory {
@@ -463,7 +477,7 @@ interface IMassInfo {
 }
 
 interface IMassInfoData {
-  item: IMassInfoItem;
+  [name: string]: IMassInfoItem;
 }
 
 interface IMassInfoItem {
@@ -476,7 +490,7 @@ interface IMassInfoItem {
 interface IMassInfoListing {
   price: number;
   by: string;
-  item_id: string;
+  item_id: number;
   name: string;
   paint_index: number;
   steam_price: number;
@@ -540,12 +554,12 @@ interface IHistory {
 
 interface IHistoryObject {
   item_id: string;
-  trade_id: number;
-  token: string;
-  partner: number;
+  trade_id: string | null;
+  tradelink: string;
+  for_steamid64: string;
   created: string;
   send_until: string;
-  reason: string;
+  reason: string | null;
   id: number;
   image: string;
   price: number;

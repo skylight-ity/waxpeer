@@ -449,14 +449,13 @@ WS.on('steamTrade', (message: SteamTrade) => {
 
 ### API error handling
 
+Most request errors come back as a normal response with `success: false` and `msg`. A rejected request (wrong API key, HTTP 4xx/5xx, timeout, network) throws the axios error message string.
+
 ```typescript
 try {
-  let user = await WP.getProfile();
-  console.log(user);
+  const res = await WP.changeTradeLink(tradelink);
+  if (!res.success) console.log(res.msg);
 } catch (e) {
-  let timeout = axios.isCancel(e) ? true : false;
-  let response = e?.response?.data;
-  let status_code = e?.response?.status;
-  console.log({ timeout, status_code, response }); //{ timeout: false, status_code: 403, response: { success: false, msg: 'wrong api' } }
+  console.log(e); // e.g. 'Request failed with status code 403' for a wrong API key
 }
 ```

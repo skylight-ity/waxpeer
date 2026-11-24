@@ -69,15 +69,10 @@ export class Waxpeer {
    * // example response:
    * /{
    * /  "success": false,
-   * /  "link": "https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk",
-   * /  "info": "You cannot trade with SteamUserName because they have a trade ban.",
-   * /  "msg": "We couldn't validate your trade link, either your inventory is private or you can't trade",
-   * /  "token": "P2YkRJOk",
-   * /  "steamid32": 900267897,
-   * /  "steamid64": 76561198000000000
+   * /  "msg": 3
    * /}
    */
-  public changeTradeLink(tradelink: string): Promise<ICheckTradeLink> {
+  public changeTradeLink(tradelink: string): Promise<{ success: boolean; msg?: string | number }> {
     return this.post('change-tradelink', { tradelink });
   }
 
@@ -486,12 +481,7 @@ export class Waxpeer {
    * // example response:
    * /{
    * /  "success": false,
-   * /  "link": "https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk",
-   * /  "info": "You cannot trade with SteamUserName because they have a trade ban.",
-   * /  "msg": "We couldn't validate your trade link, either your inventory is private or you can't trade",
-   * /  "token": "P2YkRJOk",
-   * /  "steamid32": 900267897,
-   * /  "steamid64": 76561198000000000
+   * /  "msg": "Invalid tradelink"
    * /}
    */
   public validateTradeLink(tradelink: string, cache?: boolean): Promise<ICheckTradeLink> {
@@ -785,7 +775,7 @@ export class Waxpeer {
    *   ]
    * }
    */
-  public readyToTransferP2P(steam_api: string): Promise<IReadyTransferTrade> {
+  public readyToTransferP2P(steam_api: string): Promise<{ success: boolean; msg?: string; trades: IReadyTransferTrade[] }> {
     return this.get(`ready-to-transfer-p2p`, qs.stringify({ steam_api }));
   }
 
