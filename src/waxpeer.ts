@@ -72,7 +72,7 @@ export class Waxpeer {
    * /  "msg": 3
    * /}
    */
-  public changeTradeLink(tradelink: string): Promise<{ success: boolean; msg?: string | number }> {
+  public changeTradeLink(tradelink: string): Promise<ICheckTradeLink> {
     return this.post('change-tradelink', { tradelink });
   }
 
@@ -510,7 +510,12 @@ export class Waxpeer {
   public checkItemAvailability(
     item_id: string | number | string[] | number[],
     include_hold?: 0 | 1,
-  ): Promise<{ success: boolean; items: IAvailable[] }> {
+  ): Promise<{
+    success: boolean;
+    items: IAvailable[];
+    /** @deprecated Not sent by the API: use `items`. */
+    data: IAvailable[];
+  }> {
     let ids = typeof item_id === 'object' ? item_id : [item_id];
     return this.get(`check-availability`, qs.stringify({ item_id: ids, include_hold }, { arrayFormat: 'repeat' }));
   }
@@ -775,7 +780,9 @@ export class Waxpeer {
    *   ]
    * }
    */
-  public readyToTransferP2P(steam_api: string): Promise<{ success: boolean; msg?: string; trades: IReadyTransferTrade[] }> {
+  public readyToTransferP2P(
+    steam_api: string,
+  ): Promise<IReadyTransferTrade & { success: boolean; msg?: string; trades: IReadyTransferTrade[] }> {
     return this.get(`ready-to-transfer-p2p`, qs.stringify({ steam_api }));
   }
 
@@ -1688,57 +1695,47 @@ export class Waxpeer {
     return this.request('GET', 'v1/steam-topup/fee');
   }
 
-  private async request(
+  private request(
     method: 'GET' | 'POST',
     path: string,
     query: Record<string, unknown> = {},
     body?: unknown,
   ): Promise<any> {
     const url = `${this.baseUrl}/${path}?${qs.stringify({ api: this.api, ...query }, { arrayFormat: 'repeat' })}`;
-    try {
-      return (
-        await axios.request({
-          method,
-          url,
-          data: body,
-          headers: { 'Accept-Encoding': 'gzip,deflate,compress' },
-          timeout: 60000,
-        })
-      ).data;
-    } catch (e) {
-      throw e?.message;
-    }
+    return this.send({ method, url, data: body });
   }
 
   public async post(url: string, body: any, token?: string): Promise<any> {
     let { baseUrl, api, version } = this;
     let newUrl = `${baseUrl}/${version}/${url}?api=${api}`;
     if (token) newUrl += `&${token}`;
-    try {
-      return (
-        await axios.post(newUrl, body, {
-          headers: { 'Accept-Encoding': 'gzip,deflate,compress' },
-          timeout: 60000,
-        })
-      ).data;
-    } catch (e) {
-      throw e?.message;
-    }
+    return this.send({ method: 'POST', url: newUrl, data: body });
   }
 
   public async get(url: string, token?: string): Promise<any> {
     let { baseUrl, api, version } = this;
     let newUrl = `${baseUrl}/${version}/${url}?api=${api}`;
     if (token) newUrl += `&${token}`;
+    return this.send({ method: 'GET', url: newUrl });
+  }
+
+  private async send(config: { method: 'GET' | 'POST'; url: string; data?: unknown }): Promise<any> {
+    // axios `timeout` only bounds socket idle time; the abort caps the whole request at 60 s.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60000);
     try {
       return (
-        await axios.get(newUrl, {
+        await axios.request({
+          ...config,
           headers: { 'Accept-Encoding': 'gzip,deflate,compress' },
           timeout: 60000,
+          signal: controller.signal,
         })
       ).data;
     } catch (e) {
       throw e?.message;
+    } finally {
+      clearTimeout(timer);
     }
   }
 }

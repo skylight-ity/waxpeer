@@ -105,6 +105,8 @@ interface IBuyOrdersOffer {
 interface ICreateBuyOrder {
   success: boolean;
   msg?: string;
+  /** @deprecated Not sent by the API. */
+  filled?: number;
   id?: number;
   order?: {
     id: number;
@@ -227,11 +229,16 @@ interface IBuyMyHistory {
 
 interface History {
   trade_id: null | string;
+  /** @deprecated Not sent by the API. */
+  token: string;
+  /** @deprecated Not sent by the API. */
+  partner: number;
   tradelink: string;
   for_steamid64: string;
   created: string;
   send_until: string;
-  reason: Reason | null;
+  /** `null` when the trade did not fail. */
+  reason: Reason;
   id: number;
   item_id: string;
   image: string;
@@ -344,6 +351,8 @@ interface IMerchantUserObject {
 interface IMerchantInventoryUpate {
   success: boolean;
   msg?: string;
+  /** @deprecated Not sent by the API. */
+  count?: number;
   error_message?: string;
   total_inventory_count?: number;
   availableItems?: number;
@@ -477,6 +486,8 @@ interface IMassInfo {
 }
 
 interface IMassInfoData {
+  /** @deprecated The API keys items by name: read `data[name]`. */
+  item: IMassInfoItem;
   [name: string]: IMassInfoItem;
 }
 
@@ -490,7 +501,8 @@ interface IMassInfoItem {
 interface IMassInfoListing {
   price: number;
   by: string;
-  item_id: number;
+  /** The API sends a number. */
+  item_id: string;
   name: string;
   paint_index: number;
   steam_price: number;
@@ -554,12 +566,18 @@ interface IHistory {
 
 interface IHistoryObject {
   item_id: string;
-  trade_id: string | null;
+  /** The API sends a string, or `null` before the Steam offer exists. */
+  trade_id: number;
+  /** @deprecated Not sent by the API. */
+  token: string;
+  /** @deprecated Not sent by the API. */
+  partner: number;
   tradelink: string;
   for_steamid64: string;
   created: string;
   send_until: string;
-  reason: string | null;
+  /** `null` when the trade did not fail. */
+  reason: string;
   id: number;
   image: string;
   price: number;
