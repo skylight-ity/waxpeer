@@ -1297,6 +1297,381 @@ export class Waxpeer {
     return this.post(`steam-trade`, { tradeid, waxid });
   }
 
+  /**
+   * Fetch every item listed on WAXPEER in one response (large) - `GET /v1/prices/snapshot`
+   *
+   * @param params.format `json` (default) or `csv`
+   */
+  public getPricesSnapshot(
+    params: {
+      game?: keyof typeof EGameId;
+      format?: 'json' | 'csv';
+      include_hold?: 0 | 1;
+      include_manual?: 0 | 1;
+      compact?: 0 | 1;
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/prices/snapshot', params);
+  }
+
+  /**
+   * Check up to 1000 item_ids at once - `POST /v1/check-availability`
+   */
+  public checkItemsAvailability(
+    item_ids: string[],
+    params: { include_hold?: 0 | 1; include_manual?: 0 | 1 } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/check-availability', params, { item_ids });
+  }
+
+  /**
+   * Fetch the highest buy order for every item - `GET /v1/buy-orders/snapshot`
+   */
+  public getBuyOrdersSnapshot(game: keyof typeof EGameId = 'csgo'): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/buy-orders/snapshot', { game });
+  }
+
+  /**
+   * Fetch items with cursor pagination - `GET /v2/get-items-list`
+   */
+  public getItemsListV2(
+    params: {
+      game?: keyof typeof EGameId;
+      skip?: number;
+      limit?: number;
+      search?: string;
+      brand?: string;
+      exterior?: 'FN' | 'MW' | 'FT' | 'WW' | 'BS';
+      order?: 'asc' | 'desc';
+      order_by?: 'price' | 'profit' | 'discount';
+      sort?: 'ASC' | 'DESC';
+      min_price?: number;
+      max_price?: number;
+      cursor?: string;
+      cursor_price?: number;
+      cursor_item_id?: string;
+      include_hold?: 0 | 1;
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/get-items-list', params);
+  }
+
+  /**
+   * Search available items by name(s) - `GET /v2/search-items-by-name`
+   */
+  public searchItemsV2(
+    names: string | string[],
+    params: {
+      game?: keyof typeof EGameId;
+      minified?: 0 | 1;
+      delivery_details?: 0 | 1;
+      ignore_phase?: 0 | 1;
+      include_hold?: 0 | 1;
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/search-items-by-name', { ...params, name: names });
+  }
+
+  /**
+   * Buy items in bulk and send them to one tradelink - `POST /v1/buy`
+   *
+   * Pass a unique `project_id` per item so a retried request does not buy twice.
+   */
+  public buyItems(body: {
+    tradelink: string;
+    items: { item_id?: string; name?: string; price: number; project_id?: string }[];
+    all?: boolean;
+    allow_trade_locked?: boolean;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/buy', {}, body);
+  }
+
+  /**
+   * Transfer funds to another user - `POST /v1/transfer-money`
+   *
+   * Not idempotent: a retry after a timeout can transfer twice. Check your balance first.
+   *
+   * @param amount Amount in 1/1000 USD (1000 = $1)
+   */
+  public transferMoney(steam_id: string, amount: number): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/transfer-money', { steam_id, amount });
+  }
+
+  /**
+   * Update account settings - `POST /v1/update-account`
+   */
+  public updateAccount(fields: {
+    tradelink?: string;
+    access_token?: string;
+    refresh_token?: string;
+    proxy?: string;
+    steam_api?: string;
+    webhook?: string;
+    reset_api?: boolean;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/update-account', {}, fields);
+  }
+
+  /**
+   * Force a status check of one trade - `POST /v1/force-check-trade`
+   *
+   * @param id Steam item id (`id` from your history)
+   */
+  public forceCheckTrade(id: number): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/force-check-trade', {}, { id });
+  }
+
+  /**
+   * Your trades and transactions history - `POST /v2/my-history`
+   */
+  public myHistoryV2(
+    body: {
+      skip?: number;
+      start?: string;
+      end?: string;
+      sort?: 'ASC' | 'DESC';
+      float?: number;
+      hold_only?: boolean;
+      spendings?: boolean;
+      incomings?: boolean;
+      project_id?: boolean;
+      orig_price?: boolean;
+      ignoreSteamid?: boolean;
+      all?: boolean;
+      status?: number[];
+      reason?: string[];
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/my-history', {}, body);
+  }
+
+  /**
+   * Create a buy order, with CS2 filters - `POST /v2/create-buy-order`
+   *
+   * @param body.price Price in 1/1000 USD (1000 = $1)
+   */
+  public createBuyOrderV2(body: {
+    name: string;
+    price: number;
+    amount: number;
+    game?: keyof typeof EGameId;
+    allow_trade_locked?: boolean;
+    filters?: Record<string, unknown>;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/create-buy-order', {}, body);
+  }
+
+  /**
+   * Edit the price and amount of a buy order - `POST /v2/edit-buy-order`
+   */
+  public editBuyOrderV2(id: number, price: number, amount: number): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/edit-buy-order', {}, { id, price, amount });
+  }
+
+  /**
+   * Open buy orders by item name, or your own - `GET /v2/buy-orders`
+   */
+  public buyOrdersV2(
+    params: { name?: string | string[]; own?: 0 | 1; game?: keyof typeof EGameId; skip?: number } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/buy-orders', params);
+  }
+
+  /**
+   * Remove buy orders by id - `POST /v2/remove-buy-order`
+   */
+  public removeBuyOrdersV2(ids: number[]): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/remove-buy-order', {}, { ids });
+  }
+
+  /**
+   * Remove all your buy orders, or one game's - `POST /v2/remove-all-orders`
+   */
+  public removeAllOrdersV2(game?: keyof typeof EGameId): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/remove-all-orders', {}, game ? { game } : {});
+  }
+
+  /**
+   * Fills and cancellations of your buy orders - `GET /v2/buy-order-history`
+   */
+  public buyOrderHistoryV2(
+    params: {
+      game?: keyof typeof EGameId;
+      kind?: 'filled' | 'cancelled';
+      skip?: number;
+      limit?: number;
+      sort?: 'ASC' | 'DESC';
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/buy-order-history', params);
+  }
+
+  /**
+   * Create a merchant deposit - `POST /v2/merchant/create-deposit`
+   */
+  public merchantCreateDeposit(body: {
+    merchant: string;
+    deposit_id: string;
+    steam_id?: string;
+    trade_url_token?: string;
+    game?: keyof typeof EGameId;
+    items?: string[];
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/merchant/create-deposit', {}, body);
+  }
+
+  /**
+   * Fetch a user's Steam inventory for a merchant deposit - `POST /v2/merchant/steam-inventory`
+   */
+  public merchantSteamInventory(body: {
+    merchant: string;
+    game: keyof typeof EGameId;
+    steam_id: string;
+    trade_url_token: string;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/merchant/steam-inventory', {}, body);
+  }
+
+  /**
+   * Create the Steam offer of a merchant deposit - `POST /v2/merchant/create-steam-offer`
+   */
+  public merchantCreateSteamOffer(body: {
+    merchant: string;
+    steam_id: string;
+    trade_url_token: string;
+    game: keyof typeof EGameId;
+    items: string[];
+    deposit_id?: string;
+    transaction_id?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/merchant/create-steam-offer', {}, body);
+  }
+
+  /**
+   * Fetch a merchant deposit's status - `GET /v2/merchant/deposit`
+   */
+  public merchantDeposit(params: {
+    merchant: string;
+    deposit_id?: string;
+    transaction_id?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/merchant/deposit', params);
+  }
+
+  /**
+   * Fetch a list of merchant deposits - `GET /v2/merchant/deposits`
+   */
+  public merchantDeposits(params: {
+    merchant: string;
+    start: string;
+    end: string;
+    steam_id?: string;
+    start_from?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/merchant/deposits', params);
+  }
+
+  /**
+   * Fetch a merchant webhook's data - `GET /v2/merchant/webhook`
+   */
+  public merchantWebhook(params: {
+    merchant: string;
+    deposit_id?: string;
+    transaction_id?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/merchant/webhook', params);
+  }
+
+  /**
+   * Resend a merchant webhook - `POST /v2/merchant/webhook/resend`
+   */
+  public merchantResendWebhook(body: {
+    merchant: string;
+    deposit_id?: string;
+    transaction_id?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/merchant/webhook/resend', {}, body);
+  }
+
+  /**
+   * Fetch a list of merchant webhooks - `GET /v2/merchant/webhooks`
+   */
+  public merchantWebhooks(params: {
+    merchant: string;
+    status?: 'pending' | 'waiting_next_attempt' | 'failed' | 'completed';
+    start_from?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/merchant/webhooks', params);
+  }
+
+  /**
+   * Current TRX price - `GET /v1/payment/currencies/trx`
+   */
+  public getTrxPrice(): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/payment/currencies/trx');
+  }
+
+  /**
+   * Tron energy cost estimate for an address - `GET /v1/payment/tron-energy/cost`
+   */
+  public getTronEnergyCost(address: string): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/payment/tron-energy/cost', { address });
+  }
+
+  /**
+   * Rent Tron energy for an address - `POST /v1/payment/tron-energy/rent`
+   */
+  public rentTronEnergy(address: string): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/payment/tron-energy/rent', {}, { address });
+  }
+
+  /**
+   * Top up a Steam wallet from your WAXPEER balance - `POST /v1/steam-topup`
+   *
+   * Pass a unique `custom_id` and check it with `getSteamTopup` before retrying.
+   *
+   * @param amount Amount in 1/1000 USD (1000 = $1)
+   */
+  public steamTopup(steam_login: string, amount: number, custom_id?: string): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/steam-topup', {}, { steam_login, amount, custom_id });
+  }
+
+  /**
+   * Status of a Steam top-up by `id` or `custom_id` - `GET /v1/steam-topup`
+   */
+  public getSteamTopup(params: { id?: number; custom_id?: string }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/steam-topup', params);
+  }
+
+  /**
+   * Check whether a Steam login can be topped up - `GET /v1/steam-topup/validate`
+   */
+  public validateSteamTopup(steam_login: string): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/steam-topup/validate', { steam_login });
+  }
+
+  private async request(
+    method: 'GET' | 'POST',
+    path: string,
+    query: Record<string, unknown> = {},
+    body?: unknown,
+  ): Promise<any> {
+    const url = `${this.baseUrl}/${path}?${qs.stringify({ api: this.api, ...query }, { arrayFormat: 'repeat' })}`;
+    try {
+      return (
+        await axios.request({
+          method,
+          url,
+          data: body,
+          headers: { 'Accept-Encoding': 'gzip,deflate,compress' },
+          timeout: 60000,
+        })
+      ).data;
+    } catch (e) {
+      throw e?.message;
+    }
+  }
+
   public async post(url: string, body: any, token?: string): Promise<any> {
     let { baseUrl, api, version } = this;
     let newUrl = `${baseUrl}/${version}/${url}?api=${api}`;

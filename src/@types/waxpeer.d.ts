@@ -711,3 +711,9 @@ const EGameId = {
   tf2: 440,
   rust: 252490,
 } as const;
+
+interface WaxpeerResponse {
+  success: boolean;
+  msg?: string;
+  [key: string]: any;
+}
