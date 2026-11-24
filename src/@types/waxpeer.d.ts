@@ -713,7 +713,9 @@ const EGameId = {
 } as const;
 
 interface WaxpeerResponse {
-  success: boolean;
+  success?: boolean;
   msg?: string;
+  status?: string;
+  error_message?: string;
   [key: string]: any;
 }

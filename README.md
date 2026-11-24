@@ -339,6 +339,74 @@ const data = await WP.MerchantDepositsHistory(
 console.log(data);
 ```
 
+### Buy orders (v2)
+
+The v1 buy order methods above are deprecated. Use the v2 ones:
+
+```typescript
+await WP.createBuyOrderV2({ name: 'AK-47 | Redline (Field-Tested)', game: 'csgo', price: 13000, amount: 1 });
+await WP.editBuyOrderV2(id, 13500, 2);
+await WP.buyOrdersV2({ name: ['AK-47 | Redline (Field-Tested)'] }); // or { own: 1 }
+await WP.removeBuyOrdersV2([id]);
+await WP.removeAllOrdersV2('csgo');
+await WP.buyOrderHistoryV2({ kind: 'filled', limit: 50 });
+```
+
+### Market (v2) and snapshots
+
+```typescript
+await WP.getItemsListV2({ game: 'csgo', limit: 100, order_by: 'price', order: 'desc' }); // pass next_cursor as cursor for the next page
+await WP.searchItemsV2(['AK-47 | Redline (Field-Tested)', 'AWP | Asiimov (Field-Tested)'], { game: 'csgo' });
+await WP.checkItemsAvailability(['27165625733', '27165625734']); // up to 1000 item_ids
+await WP.getPricesSnapshot({ game: 'rust' }); // every listed item, large response
+await WP.getBuyOrdersSnapshot('csgo');
+```
+
+### Buy several items to one tradelink
+
+```typescript
+await WP.buyItems({
+  tradelink: 'https://steamcommunity.com/tradeoffer/new/?partner=XXXXXXXXX&token=XXXXXXXX',
+  items: [{ item_id: '27165625733', price: 15000, project_id: 'order-1001' }], // a unique project_id makes a retry safe
+});
+```
+
+### Account
+
+```typescript
+await WP.myHistoryV2({ skip: 0, sort: 'DESC' });
+await WP.updateAccount({ tradelink: 'https://steamcommunity.com/tradeoffer/new/?partner=XXXXXXXXX&token=XXXXXXXX' });
+await WP.forceCheckTrade(id);
+await WP.transferMoney('7656119XXXXXXXXXX', 1000); // not idempotent: check your balance before retrying
+```
+
+### Steam top-up and Tron payments
+
+```typescript
+await WP.validateSteamTopup('steam_login', 5000);
+await WP.getSteamTopupFee();
+await WP.steamTopup('steam_login', 5000, 'topup-1001'); // same custom_id returns the existing top-up
+await WP.getSteamTopup({ custom_id: 'topup-1001' });
+await WP.getTrxPrice();
+await WP.getTronEnergyCost('TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+await WP.rentTronEnergy('TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+```
+
+### Merchant (v2)
+
+```typescript
+await WP.merchantCreateDeposit({ merchant: 'my_merchant', deposit_id: 'dep-1', steam_id: '7656119XXXXXXXXXX', game: 'csgo' });
+await WP.merchantSteamInventory({ merchant: 'my_merchant', game: 'csgo', steam_id: '7656119XXXXXXXXXX', trade_url_token: 'XXXXXXXX' });
+await WP.merchantCreateSteamOffer({ merchant: 'my_merchant', deposit_id: 'dep-1', steam_id: '7656119XXXXXXXXXX', trade_url_token: 'XXXXXXXX', game: 'csgo', items: ['27165625733'] });
+await WP.merchantDeposit({ merchant: 'my_merchant', deposit_id: 'dep-1' });
+await WP.merchantDeposits({ merchant: 'my_merchant', start: '2026-11-01', end: '2026-11-24' });
+await WP.merchantWebhook({ merchant: 'my_merchant', deposit_id: 'dep-1' });
+await WP.merchantResendWebhook({ merchant: 'my_merchant', deposit_id: 'dep-1' });
+await WP.merchantWebhooks({ merchant: 'my_merchant', status: 'failed' });
+```
+
+Merchant v2 methods answer with `status` and `error_message` instead of `success` and `msg`.
+
 ### Trade websocket events that you need to implement
 
 ```typescript
