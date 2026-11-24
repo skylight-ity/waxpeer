@@ -286,6 +286,7 @@ console.log(data);
 
 ```typescript
 const data = await WP.getSteamItems(730);
+const page = await WP.getSteamItems(570, '0', { limit: 1000, skip: 0 }); // paged, ordered by name
 console.log(data);
 ```
 
@@ -377,7 +378,7 @@ await WP.buyItems({
 await WP.myHistoryV2({ skip: 0, sort: 'DESC' });
 await WP.updateAccount({ tradelink: 'https://steamcommunity.com/tradeoffer/new/?partner=XXXXXXXXX&token=XXXXXXXX' });
 await WP.forceCheckTrade(id);
-await WP.transferMoney('7656119XXXXXXXXXX', 1000); // not idempotent: check your balance before retrying
+await WP.transferMoney('7656119XXXXXXXXXX', 1000, 'transfer-1001'); // retry with the same key returns the first result
 ```
 
 ### Steam top-up and Tron payments
@@ -389,7 +390,7 @@ await WP.steamTopup('steam_login', 5000, 'topup-1001'); // same custom_id return
 await WP.getSteamTopup({ custom_id: 'topup-1001' });
 await WP.getTrxPrice();
 await WP.getTronEnergyCost('TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-await WP.rentTronEnergy('TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+await WP.rentTronEnergy('TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', 'rent-1001'); // optional idempotency key
 ```
 
 ### Merchant (v2)

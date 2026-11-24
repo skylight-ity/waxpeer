@@ -2,6 +2,10 @@ import axios from 'axios';
 import qs from 'qs';
 const RateLimiter = require('limiter').RateLimiter;
 
+function idempotencyHeaders(key?: string): Record<string, string> {
+  return key ? { 'Idempotency-Key': key } : {};
+}
+
 export class Waxpeer {
   private api: string;
   public baseUrl = 'https://api.waxpeer.com';
@@ -1105,6 +1109,7 @@ export class Waxpeer {
    *
    * @param game Game app_id from supported games (default 730)
    * @param highest_offer (optional) Highest offer price (Not accurate, because not filtering offers by users balances)
+   * @param page (optional) `limit` returns at most that many items ordered by name, `skip` (used only with `limit`) skips that many. Without `limit` the whole list is returned.
    * @example
    * // example response:
    * {
@@ -1121,8 +1126,12 @@ export class Waxpeer {
    *   ]
    * }
    */
-  public getSteamItems(game: number = 730, highest_offer: '0' | '1' = '0'): Promise<IGetSteamItems> {
-    return this.get(`get-steam-items`, qs.stringify({ game, highest_offer }));
+  public getSteamItems(
+    game: number = 730,
+    highest_offer: '0' | '1' = '0',
+    page: { limit?: number; skip?: number } = {},
+  ): Promise<IGetSteamItems> {
+    return this.get(`get-steam-items`, qs.stringify({ game, highest_offer, limit: page.limit, skip: page.skip }));
   }
 
   /**
@@ -1416,12 +1425,14 @@ export class Waxpeer {
   /**
    * Transfer funds to another user - `POST /v1/transfer-money`
    *
-   * Not idempotent: a retry after a timeout can transfer twice. Check your balance first.
+   * Without `idempotencyKey` a retry after a timeout can transfer twice. With it, a retry with the
+   * same key and params returns the first result (`idempotent_replay: true`) instead of transferring again.
    *
    * @param amount Amount in 1/1000 USD (1000 = $1)
+   * @param idempotencyKey (optional) Your unique id for this transfer, 8-128 of `A-Za-z0-9_-`, kept 24 h
    */
-  public transferMoney(steam_id: string, amount: number): Promise<WaxpeerResponse> {
-    return this.request('POST', 'v1/transfer-money', { steam_id, amount });
+  public transferMoney(steam_id: string, amount: number, idempotencyKey?: string): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/transfer-money', { steam_id, amount }, undefined, idempotencyHeaders(idempotencyKey));
   }
 
   /**
@@ -1658,9 +1669,11 @@ export class Waxpeer {
 
   /**
    * Rent Tron energy for an address - `POST /v1/payment/tron-energy/rent`
+   *
+   * @param idempotencyKey (optional) Same as in `transferMoney`: a retry with the same key returns the first result
    */
-  public rentTronEnergy(address: string): Promise<WaxpeerResponse> {
-    return this.request('POST', 'v1/payment/tron-energy/rent', {}, { address });
+  public rentTronEnergy(address: string, idempotencyKey?: string): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/payment/tron-energy/rent', {}, { address }, idempotencyHeaders(idempotencyKey));
   }
 
   /**
@@ -1700,9 +1713,10 @@ export class Waxpeer {
     path: string,
     query: Record<string, unknown> = {},
     body?: unknown,
+    headers: Record<string, string> = {},
   ): Promise<any> {
     const url = `${this.baseUrl}/${path}?${qs.stringify({ api: this.api, ...query }, { arrayFormat: 'repeat' })}`;
-    return this.send({ method, url, data: body });
+    return this.send({ method, url, data: body, headers });
   }
 
   public async post(url: string, body: any, token?: string): Promise<any> {
@@ -1719,7 +1733,12 @@ export class Waxpeer {
     return this.send({ method: 'GET', url: newUrl });
   }
 
-  private async send(config: { method: 'GET' | 'POST'; url: string; data?: unknown }): Promise<any> {
+  private async send(config: {
+    method: 'GET' | 'POST';
+    url: string;
+    data?: unknown;
+    headers?: Record<string, string>;
+  }): Promise<any> {
     // axios `timeout` only bounds socket idle time; the abort caps the whole request at 60 s.
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 60000);
@@ -1727,7 +1746,7 @@ export class Waxpeer {
       return (
         await axios.request({
           ...config,
-          headers: { 'Accept-Encoding': 'gzip,deflate,compress' },
+          headers: { 'Accept-Encoding': 'gzip,deflate,compress', ...config.headers },
           timeout: 60000,
           signal: controller.signal,
         })
