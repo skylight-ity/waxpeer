@@ -9,7 +9,7 @@ Trade websocket documentation [here](https://docs.waxpeer.com/?method=websocket)
 Now in order to go online and sell items safely you need to implement the following logic:
 
 1. Make sure that you have enabled the collection of user data on the website under the "Sell items" tab (by default it is enabled).
-2. Going online now requires a valid Steam access token because the API key functionality has been limited. You need to send it once an hour or immediately after an refresh (the token is active only 24 hours after refreshing in Steam), otherwise it will expire and all your items will be disabled from sale, and active trades will be considered stalled and may be canceled.
+2. Going online now requires a valid Steam access token because the API key functionality has been limited. You need to send it once an hour or immediately after an refresh (the token is active only 24 hours after refreshing in Steam), otherwise it will expire and all your items will be disabled from sale, and active trades will be considered stalled and may be canceled. Take the token from the `steamLoginSecure` cookie on steamcommunity.com: its value is `{steamid64}%7C%7C{token}`, and the token is the part after `%7C%7C`. Its `aud` claim includes `web:community`. Do not send the token from `store.steampowered.com/pointssummary/ajaxgetasyncconfig` (`aud: web:store`): Steam does not accept it on steamcommunity.com, so we cannot use it to cancel your stale trade offers.
 3. We categorically recommend not to make a mobile confirmation for a created trade until you send its trade id using the callback method.
 4. Online may be delayed until the access token is verified or a valid token is received. Therefore, please note that in the trade socket there is a new `user_change` event, in which `can_p2p` indicates whether you are online or not when it is changed by p2p controller.
 5. If you do not want to use this package, but will be implementing your own trade socket connection, make sure you specify the `source` parameter on the authentification event (`auth`) without which the account will not be able to get online (example: "source": "myAwesomeProject").
@@ -286,6 +286,7 @@ console.log(data);
 
 ```typescript
 const data = await WP.getSteamItems(730);
+const page = await WP.getSteamItems(570, '0', { limit: 1000, skip: 0 }); // paged, ordered by name
 console.log(data);
 ```
 
@@ -339,6 +340,74 @@ const data = await WP.MerchantDepositsHistory(
 console.log(data);
 ```
 
+### Buy orders (v2)
+
+The v1 buy order methods above are deprecated. Use the v2 ones:
+
+```typescript
+await WP.createBuyOrderV2({ name: 'AK-47 | Redline (Field-Tested)', game: 'csgo', price: 13000, amount: 1 });
+await WP.editBuyOrderV2(id, 13500, 2);
+await WP.buyOrdersV2({ name: ['AK-47 | Redline (Field-Tested)'] }); // or { own: 1 }
+await WP.removeBuyOrdersV2([id]);
+await WP.removeAllOrdersV2('csgo');
+await WP.buyOrderHistoryV2({ kind: 'filled', limit: 50 });
+```
+
+### Market (v2) and snapshots
+
+```typescript
+await WP.getItemsListV2({ game: 'csgo', limit: 100, order_by: 'price', order: 'desc' }); // pass next_cursor as cursor for the next page
+await WP.searchItemsV2(['AK-47 | Redline (Field-Tested)', 'AWP | Asiimov (Field-Tested)'], { game: 'csgo' });
+await WP.checkItemsAvailability(['27165625733', '27165625734']); // up to 1000 item_ids
+await WP.getPricesSnapshot({ game: 'rust' }); // every listed item, large response
+await WP.getBuyOrdersSnapshot('csgo');
+```
+
+### Buy several items to one tradelink
+
+```typescript
+await WP.buyItems({
+  tradelink: 'https://steamcommunity.com/tradeoffer/new/?partner=XXXXXXXXX&token=XXXXXXXX',
+  items: [{ item_id: '27165625733', price: 15000, project_id: 'order-1001' }], // a unique project_id makes a retry safe
+});
+```
+
+### Account
+
+```typescript
+await WP.myHistoryV2({ skip: 0, sort: 'DESC' });
+await WP.updateAccount({ tradelink: 'https://steamcommunity.com/tradeoffer/new/?partner=XXXXXXXXX&token=XXXXXXXX' });
+await WP.forceCheckTrade(id);
+await WP.transferMoney('7656119XXXXXXXXXX', 1000, 'transfer-1001'); // retry with the same key returns the first result
+```
+
+### Steam top-up and Tron payments
+
+```typescript
+await WP.validateSteamTopup('steam_login', 5000);
+await WP.getSteamTopupFee();
+await WP.steamTopup('steam_login', 5000, 'topup-1001'); // same custom_id returns the existing top-up
+await WP.getSteamTopup({ custom_id: 'topup-1001' });
+await WP.getTrxPrice();
+await WP.getTronEnergyCost('TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+await WP.rentTronEnergy('TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', 'rent-1001'); // optional idempotency key
+```
+
+### Merchant (v2)
+
+```typescript
+await WP.merchantCreateDeposit({ merchant: 'my_merchant', deposit_id: 'dep-1', steam_id: '7656119XXXXXXXXXX', game: 'csgo' });
+await WP.merchantSteamInventory({ merchant: 'my_merchant', game: 'csgo', steam_id: '7656119XXXXXXXXXX', trade_url_token: 'XXXXXXXX' });
+await WP.merchantCreateSteamOffer({ merchant: 'my_merchant', deposit_id: 'dep-1', steam_id: '7656119XXXXXXXXXX', trade_url_token: 'XXXXXXXX', game: 'csgo', items: ['27165625733'] });
+await WP.merchantDeposit({ merchant: 'my_merchant', deposit_id: 'dep-1' });
+await WP.merchantDeposits({ merchant: 'my_merchant', start: '2026-11-01', end: '2026-11-24' });
+await WP.merchantWebhook({ merchant: 'my_merchant', deposit_id: 'dep-1' });
+await WP.merchantResendWebhook({ merchant: 'my_merchant', deposit_id: 'dep-1' });
+await WP.merchantWebhooks({ merchant: 'my_merchant', status: 'failed' });
+```
+
+Merchant v2 methods answer with `status` and `error_message` instead of `success` and `msg`.
+
 ### Trade websocket events that you need to implement
 
 ```typescript
@@ -381,14 +450,13 @@ WS.on('steamTrade', (message: SteamTrade) => {
 
 ### API error handling
 
+Most request errors come back as a normal response with `success: false` and `msg`. A rejected request (wrong API key, HTTP 4xx/5xx, timeout, network) throws the axios error message string.
+
 ```typescript
 try {
-  let user = await WP.getProfile();
-  console.log(user);
+  const res = await WP.changeTradeLink(tradelink);
+  if (!res.success) console.log(res.msg);
 } catch (e) {
-  let timeout = axios.isCancel(e) ? true : false;
-  let response = e?.response?.data;
-  let status_code = e?.response?.status;
-  console.log({ timeout, status_code, response }); //{ timeout: false, status_code: 403, response: { success: false, msg: 'wrong api' } }
+  console.log(e); // e.g. 'Request failed with status code 403' for a wrong API key
 }
 ```

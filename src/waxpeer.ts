@@ -2,6 +2,10 @@ import axios from 'axios';
 import qs from 'qs';
 const RateLimiter = require('limiter').RateLimiter;
 
+function idempotencyHeaders(key?: string): Record<string, string> {
+  return key ? { 'Idempotency-Key': key } : {};
+}
+
 export class Waxpeer {
   private api: string;
   public baseUrl = 'https://api.waxpeer.com';
@@ -69,12 +73,7 @@ export class Waxpeer {
    * // example response:
    * /{
    * /  "success": false,
-   * /  "link": "https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk",
-   * /  "info": "You cannot trade with SteamUserName because they have a trade ban.",
-   * /  "msg": "We couldn't validate your trade link, either your inventory is private or you can't trade",
-   * /  "token": "P2YkRJOk",
-   * /  "steamid32": 900267897,
-   * /  "steamid64": 76561198000000000
+   * /  "msg": 3
    * /}
    */
   public changeTradeLink(tradelink: string): Promise<ICheckTradeLink> {
@@ -117,10 +116,11 @@ export class Waxpeer {
     partner: string,
     project_id: string = undefined,
     game: keyof typeof EGameId = 'csgo',
+    opts: { tradelink?: string; all?: 0 | 1 } = {},
   ): Promise<IBuy> {
     return this.get(
       'buy-one-p2p-name',
-      qs.stringify({ name: encodeURIComponent(name), price, token, partner, project_id, game }),
+      qs.stringify({ name, price, token, partner, project_id, game, ...opts }),
     );
   }
 
@@ -159,8 +159,9 @@ export class Waxpeer {
     token: string,
     partner: string,
     project_id?: string,
+    opts: { allow_trade_locked?: 0 | 1; tradelink?: string; all?: 0 | 1 } = {},
   ): Promise<IBuy> {
-    return this.get('buy-one-p2p', qs.stringify({ item_id, price, token, partner, project_id }));
+    return this.get('buy-one-p2p', qs.stringify({ item_id, price, token, partner, project_id, ...opts }));
   }
 
   /**
@@ -274,7 +275,7 @@ export class Waxpeer {
     let id = [];
     if (typeof ids !== 'object') id = [ids];
     else id = [...ids];
-    return this.get('check-many-project-id', id.map((i) => `id=${i}`).join('&'));
+    return this.get('check-many-project-id', id.map((i) => `id=${encodeURIComponent(i)}`).join('&'));
   }
 
   /**
@@ -343,6 +344,7 @@ export class Waxpeer {
     minified: 0 | 1 = 1,
     highest_offer: number = 0,
     single: 0 | 1 = 0,
+    include_hold?: 0 | 1,
   ): Promise<IPrices> {
     if (!this.getPricesLimiter.tryRemoveTokens(1))
       return Promise.reject(new Error('Too many requests, try again later'));
@@ -352,10 +354,11 @@ export class Waxpeer {
         game,
         min_price,
         max_price,
-        search: typeof search === 'string' && search?.length ? encodeURIComponent(search) : undefined,
+        search: typeof search === 'string' && search?.length ? search : undefined,
         minified,
         highest_offer,
         single,
+        include_hold,
       }),
     );
   }
@@ -391,20 +394,24 @@ export class Waxpeer {
    * }
    */
   public getPricesDopplers(
-    phase: keyof typeof EDopplersPhases = 'any',
-    exterior: keyof typeof EMinExteriors = undefined,
-    weapon: keyof typeof EWeapon = undefined,
+    phase: keyof typeof EDopplersPhases | (keyof typeof EDopplersPhases)[] = 'any',
+    exterior: keyof typeof EMinExteriors | (keyof typeof EMinExteriors)[] = undefined,
+    weapon: keyof typeof EWeapon | (keyof typeof EWeapon)[] = undefined,
     minified: 0 | 1 = 1,
     min_price: number = undefined,
     max_price: number = undefined,
     search: string = undefined,
     single: 0 | 1 = 0,
+    include_hold?: 0 | 1,
   ): Promise<IPricesDopplers> {
     if (!this.getPricesDopplersLimiter.tryRemoveTokens(1))
       return Promise.reject(new Error('Too many requests, try again later'));
     return this.get(
       `prices/dopplers`,
-      qs.stringify({ phase, exterior, weapon, minified, min_price, max_price, search, single }),
+      qs.stringify(
+        { phase, exterior, weapon, minified, min_price, max_price, search, single, include_hold },
+        { arrayFormat: 'repeat' },
+      ),
     );
   }
 
@@ -467,8 +474,8 @@ export class Waxpeer {
    *   }
    * }
    */
-  public massInfo(names: string[], game: keyof typeof EGameId = 'csgo'): Promise<IMassInfo> {
-    return this.post('mass-info', { name: names, sell: 1 }, qs.stringify({ game }));
+  public massInfo(names: string[], game: keyof typeof EGameId = 'csgo', include_hold?: 0 | 1): Promise<IMassInfo> {
+    return this.post('mass-info', { name: names, sell: 1 }, qs.stringify({ game, include_hold }));
   }
 
   /**
@@ -478,16 +485,11 @@ export class Waxpeer {
    * // example response:
    * /{
    * /  "success": false,
-   * /  "link": "https://steamcommunity.com/tradeoffer/new/?partner=900267897&token=P2YkRJOk",
-   * /  "info": "You cannot trade with SteamUserName because they have a trade ban.",
-   * /  "msg": "We couldn't validate your trade link, either your inventory is private or you can't trade",
-   * /  "token": "P2YkRJOk",
-   * /  "steamid32": 900267897,
-   * /  "steamid64": 76561198000000000
+   * /  "msg": "Invalid tradelink"
    * /}
    */
-  public validateTradeLink(tradelink: string): Promise<ICheckTradeLink> {
-    return this.post(`check-tradelink`, { tradelink });
+  public validateTradeLink(tradelink: string, cache?: boolean): Promise<ICheckTradeLink> {
+    return this.post(`check-tradelink`, { tradelink, cache });
   }
 
   /**
@@ -511,9 +513,15 @@ export class Waxpeer {
    */
   public checkItemAvailability(
     item_id: string | number | string[] | number[],
-  ): Promise<{ success: boolean; data: IAvailable[] }> {
+    include_hold?: 0 | 1,
+  ): Promise<{
+    success: boolean;
+    items: IAvailable[];
+    /** @deprecated Not sent by the API: use `items`. */
+    data: IAvailable[];
+  }> {
     let ids = typeof item_id === 'object' ? item_id : [item_id];
-    return this.get(`check-availability`, ids.map((i) => `item_id=${i}`).join('&'));
+    return this.get(`check-availability`, qs.stringify({ item_id: ids, include_hold }, { arrayFormat: 'repeat' }));
   }
 
   /**
@@ -583,11 +591,16 @@ export class Waxpeer {
    *   ]
    * }
    */
-  public listItemsSteam(items: ListedItem[], game: keyof typeof EGameId = 'csgo'): Promise<ListItems> {
+  public listItemsSteam(
+    items: ListedItem[],
+    game: keyof typeof EGameId = 'csgo',
+    escrow?: boolean,
+  ): Promise<ListItems> {
     return this.post(
       'list-items-steam',
       {
         items,
+        escrow,
       },
       qs.stringify({ game }),
     );
@@ -655,8 +668,12 @@ export class Waxpeer {
    *   "count": 5,
    * }
    */
-  public getMyInventory(skip: number = 0, game: keyof typeof EGameId = 'csgo'): Promise<GetMySteamInv> {
-    return this.get('get-my-inventory', qs.stringify({ skip, game }));
+  public getMyInventory(
+    skip: number = 0,
+    game: keyof typeof EGameId = 'csgo',
+    locked?: 0 | 1 | 'all',
+  ): Promise<GetMySteamInv> {
+    return this.get('get-my-inventory', qs.stringify({ skip, game, locked }));
   }
 
   /**
@@ -679,10 +696,13 @@ export class Waxpeer {
    *   ]
    * }
    */
-  public searchItems(names: string[] | string, game: keyof typeof EGameId = 'csgo'): Promise<GetItems> {
+  public searchItems(
+    names: string[] | string,
+    game: keyof typeof EGameId = 'csgo',
+    opts: { minified?: 0 | 1; include_hold?: 0 | 1 } = {},
+  ): Promise<GetItems> {
     let nameSearch = typeof names === 'object' ? names : [names];
-    let searchNames = nameSearch.map((i) => `names=${encodeURIComponent(i)}`).join('&');
-    return this.get('search-items-by-name', `game=${game}&${searchNames}`);
+    return this.get('search-items-by-name', qs.stringify({ game, names: nameSearch, ...opts }, { arrayFormat: 'repeat' }));
   }
 
   /**
@@ -764,7 +784,9 @@ export class Waxpeer {
    *   ]
    * }
    */
-  public readyToTransferP2P(steam_api: string): Promise<IReadyTransferTrade> {
+  public readyToTransferP2P(
+    steam_api: string,
+  ): Promise<IReadyTransferTrade & { success: boolean; msg?: string; trades: IReadyTransferTrade[] }> {
     return this.get(`ready-to-transfer-p2p`, qs.stringify({ steam_api }));
   }
 
@@ -865,9 +887,10 @@ export class Waxpeer {
    */
   public removeItems(
     ids: number | number[] | string | string[],
+    game?: keyof typeof EGameId,
   ): Promise<{ success: boolean; count: number; removed: number[] }> {
     let removeId: any[] = typeof ids === 'object' ? ids : [ids];
-    return this.get(`remove-items`, removeId.map((i) => `id=${i}`).join('&'));
+    return this.get(`remove-items`, qs.stringify({ id: removeId, game }, { arrayFormat: 'repeat' }));
   }
 
   /**
@@ -892,13 +915,16 @@ export class Waxpeer {
    *   ],
    *   "count": 2
    * }
+   * @deprecated The v1 buy-order endpoints are deprecated. Use `buyOrderHistoryV2`.
    */
   public buyOrderHistory(
     skip: number = 0,
     game?: keyof typeof EGameId,
     sort: 'ASC' | 'DESC' = 'ASC',
+    kind?: 'filled' | 'cancelled',
+    limit?: number,
   ): Promise<IBuyOrderHistory> {
-    return this.get(`buy-order-history`, qs.stringify({ skip, game, sort }));
+    return this.get(`buy-order-history`, qs.stringify({ skip, game, sort, kind, limit }));
   }
 
   /**
@@ -925,14 +951,15 @@ export class Waxpeer {
    *   ],
    *   "count": 0
    * }
+   * @deprecated The v1 buy-order endpoints are deprecated. Use `buyOrdersV2`.
    */
   public buyOrders(
     skip: number = 0,
-    name?: string,
+    name?: string | string[],
     own: '0' | '1' = '0',
     game?: keyof typeof EGameId,
   ): Promise<IBuyOrders> {
-    return this.get(`buy-orders`, qs.stringify({ skip, name, own, game }));
+    return this.get(`buy-orders`, qs.stringify({ skip, name, own, game }, { arrayFormat: 'repeat' }));
   }
 
   /**
@@ -950,6 +977,7 @@ export class Waxpeer {
    *   "filled": 2,
    *   "id": 2007
    * }
+   * @deprecated The v1 buy-order endpoints are deprecated. Use `createBuyOrderV2`.
    */
   public createBuyOrder(
     name: string,
@@ -975,6 +1003,7 @@ export class Waxpeer {
    *   "amount": 6,
    *   "price": 2008
    * }
+   * @deprecated The v1 buy-order endpoints are deprecated. Use `editBuyOrderV2`.
    */
   public editBuyOrder(id: number, amount: number, price: number): Promise<IEditBuyOrder> {
     return this.post(`edit-buy-order`, { id, amount, price });
@@ -991,6 +1020,7 @@ export class Waxpeer {
    *   "msg": "string",
    *   "removed": 5
    * }
+   * @deprecated The v1 buy-order endpoints are deprecated. Use `removeBuyOrdersV2`.
    */
   public removeBuyOrder(ids: number | number[]): Promise<IRemoveBuyOrder> {
     let removeIds: any[] = typeof ids === 'object' ? ids : [ids];
@@ -1004,6 +1034,7 @@ export class Waxpeer {
    * Note: If response success is false, then some orders may be not removed (due to timeout), removed count will be also available in that case
    *
    * @param game (optional) Game from supported games (without game param will remove all)
+   * @deprecated The v1 buy-order endpoints are deprecated. Use `removeAllOrdersV2`.
    */
   public removeAllOrders(game: keyof typeof EGameId = undefined): Promise<IRemoveAllOrders> {
     return this.get(`remove-all-orders`, qs.stringify({ game }));
@@ -1049,11 +1080,12 @@ export class Waxpeer {
     search: string = undefined,
     brand: keyof typeof EWeaponBrand = undefined,
     order: 'ASC' | 'DESC' = 'DESC',
-    order_by: 'price' | 'name' | 'discount' | 'best_deals' = 'price',
+    order_by: 'price' | 'profit' | 'discount' | 'name' | 'best_deals' = 'price',
     exterior: keyof typeof EMinExteriors = undefined,
     max_price: number = undefined,
     min_price: number = undefined,
     game: keyof typeof EGameId = 'csgo',
+    include_hold?: 0 | 1,
   ): Promise<IGetItemsList> {
     return this.get(
       `get-items-list`,
@@ -1067,6 +1099,7 @@ export class Waxpeer {
         max_price,
         min_price,
         game,
+        include_hold,
       }),
     );
   }
@@ -1076,6 +1109,7 @@ export class Waxpeer {
    *
    * @param game Game app_id from supported games (default 730)
    * @param highest_offer (optional) Highest offer price (Not accurate, because not filtering offers by users balances)
+   * @param page (optional) `limit` returns at most that many items ordered by name, `skip` (used only with `limit`) skips that many. Without `limit` the whole list is returned.
    * @example
    * // example response:
    * {
@@ -1092,8 +1126,12 @@ export class Waxpeer {
    *   ]
    * }
    */
-  public getSteamItems(game: number = 730, highest_offer: '0' | '1' = '0'): Promise<IGetSteamItems> {
-    return this.get(`get-steam-items`, qs.stringify({ game, highest_offer }));
+  public getSteamItems(
+    game: number = 730,
+    highest_offer: '0' | '1' = '0',
+    page: { limit?: number; skip?: number } = {},
+  ): Promise<IGetSteamItems> {
+    return this.get(`get-steam-items`, qs.stringify({ game, highest_offer, limit: page.limit, skip: page.skip }));
   }
 
   /**
@@ -1278,8 +1316,8 @@ export class Waxpeer {
    *    "exp": 1712852259
    * }
    */
-  public UserSteamToken(token: string) {
-    return this.post(`user/steam-token`, { token });
+  public UserSteamToken(token: string, r_token?: string) {
+    return this.post(`user/steam-token`, { token, r_token });
   }
   /**
    * Due to the Steam update we recommend to send this request and do mobile confirmation only if you receive a successful response (success param is true).
@@ -1297,44 +1335,426 @@ export class Waxpeer {
     return this.post(`steam-trade`, { tradeid, waxid });
   }
 
+  /**
+   * Fetch every item listed on WAXPEER in one response (large) - `GET /v1/prices/snapshot`
+   *
+   * @param params.format `json` (default) or `csv`
+   */
+  public getPricesSnapshot(
+    params: {
+      game?: keyof typeof EGameId;
+      format?: 'json' | 'csv';
+      include_hold?: 0 | 1;
+      include_manual?: 0 | 1;
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/prices/snapshot', params);
+  }
+
+  /**
+   * Check up to 1000 item_ids at once - `POST /v1/check-availability`
+   */
+  public checkItemsAvailability(
+    item_ids: string[],
+    params: { include_hold?: 0 | 1; include_manual?: 0 | 1 } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/check-availability', params, { item_ids });
+  }
+
+  /**
+   * Fetch the highest buy order for every item - `GET /v1/buy-orders/snapshot`
+   */
+  public getBuyOrdersSnapshot(game: keyof typeof EGameId = 'csgo'): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/buy-orders/snapshot', { game });
+  }
+
+  /**
+   * Fetch items with cursor pagination - `GET /v2/get-items-list`
+   */
+  public getItemsListV2(
+    params: {
+      game?: keyof typeof EGameId;
+      skip?: number;
+      limit?: number;
+      search?: string;
+      brand?: string;
+      exterior?: 'FN' | 'MW' | 'FT' | 'WW' | 'BS';
+      order?: 'asc' | 'desc';
+      order_by?: 'price' | 'profit' | 'discount';
+      sort?: 'ASC' | 'DESC';
+      min_price?: number;
+      max_price?: number;
+      cursor?: string;
+      cursor_price?: number;
+      cursor_item_id?: string;
+      include_hold?: 0 | 1;
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/get-items-list', params);
+  }
+
+  /**
+   * Search available items by name(s) - `GET /v2/search-items-by-name`
+   */
+  public searchItemsV2(
+    names: string | string[],
+    params: {
+      game?: keyof typeof EGameId;
+      delivery_details?: 0 | 1;
+      ignore_phase?: 0 | 1;
+      include_hold?: 0 | 1;
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/search-items-by-name', { ...params, name: names });
+  }
+
+  /**
+   * Buy items in bulk and send them to one tradelink - `POST /v1/buy`
+   *
+   * Pass a unique `project_id` per item so a retried request does not buy twice.
+   */
+  public buyItems(body: {
+    tradelink: string;
+    items: { item_id: string; price: number; project_id?: string; name?: string }[];
+    all?: boolean;
+    allow_trade_locked?: boolean;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/buy', {}, body);
+  }
+
+  /**
+   * Transfer funds to another user - `POST /v1/transfer-money`
+   *
+   * Without `idempotencyKey` a retry after a timeout can transfer twice. With it, a retry with the
+   * same key and params returns the first result (`idempotent_replay: true`) instead of transferring again.
+   *
+   * @param amount Amount in 1/1000 USD (1000 = $1)
+   * @param idempotencyKey (optional) Your unique id for this transfer, 8-128 of `A-Za-z0-9_-`, kept 24 h
+   */
+  public transferMoney(steam_id: string, amount: number, idempotencyKey?: string): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/transfer-money', { steam_id, amount }, undefined, idempotencyHeaders(idempotencyKey));
+  }
+
+  /**
+   * Update account settings - `POST /v1/update-account`
+   *
+   * `access_token` and `refresh_token` are base64; `refresh_token` is saved only together with `access_token`.
+   */
+  public updateAccount(fields: {
+    tradelink?: string;
+    access_token?: string;
+    refresh_token?: string;
+    proxy?: string;
+    steam_api?: string;
+    webhook?: string;
+    reset_api?: boolean;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/update-account', {}, fields);
+  }
+
+  /**
+   * Force a status check of one trade - `POST /v1/force-check-trade`
+   *
+   * @param id Steam item id (`id` from your history)
+   */
+  public forceCheckTrade(id: number): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/force-check-trade', {}, { id });
+  }
+
+  /**
+   * Your trades and transactions history - `POST /v2/my-history`
+   */
+  public myHistoryV2(
+    body: {
+      skip?: number;
+      start?: string;
+      end?: string;
+      sort?: 'ASC' | 'DESC';
+      float?: boolean;
+      hold_only?: boolean;
+      spendings?: boolean;
+      incomings?: boolean;
+      project_id?: boolean;
+      orig_price?: boolean;
+      ignoreSteamid?: boolean;
+      all?: boolean;
+      status?: number[];
+      reason?: string[];
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/my-history', {}, body);
+  }
+
+  /**
+   * Create a buy order, with CS2 filters - `POST /v2/create-buy-order`
+   *
+   * @param body.price Price in 1/1000 USD (1000 = $1)
+   */
+  public createBuyOrderV2(body: {
+    name: string;
+    price: number;
+    amount: number;
+    game?: keyof typeof EGameId;
+    allow_trade_locked?: boolean;
+    filters?: Record<string, unknown>;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/create-buy-order', {}, body);
+  }
+
+  /**
+   * Edit the price and amount of a buy order - `POST /v2/edit-buy-order`
+   */
+  public editBuyOrderV2(id: number, price: number, amount: number): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/edit-buy-order', {}, { id, price, amount });
+  }
+
+  /**
+   * Open buy orders by item name, or your own - `GET /v2/buy-orders`
+   */
+  public buyOrdersV2(
+    params: { name?: string | string[]; own?: 0 | 1; game?: keyof typeof EGameId; skip?: number } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/buy-orders', params);
+  }
+
+  /**
+   * Remove buy orders by id - `POST /v2/remove-buy-order`
+   */
+  public removeBuyOrdersV2(ids: number[]): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/remove-buy-order', {}, { ids });
+  }
+
+  /**
+   * Remove all your buy orders, or one game's - `POST /v2/remove-all-orders`
+   */
+  public removeAllOrdersV2(game?: keyof typeof EGameId): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/remove-all-orders', {}, game ? { game } : {});
+  }
+
+  /**
+   * Fills and cancellations of your buy orders - `GET /v2/buy-order-history`
+   */
+  public buyOrderHistoryV2(
+    params: {
+      game?: keyof typeof EGameId;
+      kind?: 'filled' | 'cancelled';
+      skip?: number;
+      limit?: number;
+      sort?: 'ASC' | 'DESC';
+    } = {},
+  ): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/buy-order-history', params);
+  }
+
+  /**
+   * Create a merchant deposit - `POST /v2/merchant/create-deposit`
+   */
+  public merchantCreateDeposit(body: {
+    merchant: string;
+    deposit_id: string;
+    steam_id?: string;
+    trade_url_token?: string;
+    game?: keyof typeof EGameId;
+    items?: string[];
+    currency?: string;
+    min_amount?: number;
+    max_amount?: number;
+    result_url?: string;
+    fail_url?: string;
+    success_url?: string;
+    priority_game?: keyof typeof EGameId;
+    widget?: boolean;
+    originUrl?: string;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/merchant/create-deposit', {}, body);
+  }
+
+  /**
+   * Fetch a user's Steam inventory for a merchant deposit - `POST /v2/merchant/steam-inventory`
+   */
+  public merchantSteamInventory(body: {
+    merchant: string;
+    game: 'csgo' | 'rust';
+    steam_id: string;
+    trade_url_token: string;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/merchant/steam-inventory', {}, body);
+  }
+
+  /**
+   * Create the Steam offer of a merchant deposit - `POST /v2/merchant/create-steam-offer`
+   */
+  public merchantCreateSteamOffer(body: {
+    merchant: string;
+    steam_id: string;
+    trade_url_token: string;
+    game: keyof typeof EGameId;
+    items: string[];
+    deposit_id?: string;
+    transaction_id?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/merchant/create-steam-offer', {}, body);
+  }
+
+  /**
+   * Fetch a merchant deposit's status - `GET /v2/merchant/deposit`
+   */
+  public merchantDeposit(params: {
+    merchant: string;
+    deposit_id?: string;
+    transaction_id?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/merchant/deposit', params);
+  }
+
+  /**
+   * Fetch a list of merchant deposits - `GET /v2/merchant/deposits`
+   */
+  public merchantDeposits(params: {
+    merchant: string;
+    start: string;
+    end: string;
+    steam_id?: string;
+    start_from?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/merchant/deposits', params);
+  }
+
+  /**
+   * Fetch a merchant webhook's data - `GET /v2/merchant/webhook`
+   */
+  public merchantWebhook(params: {
+    merchant: string;
+    deposit_id?: string;
+    transaction_id?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/merchant/webhook', params);
+  }
+
+  /**
+   * Resend a merchant webhook - `POST /v2/merchant/webhook/resend`
+   */
+  public merchantResendWebhook(body: {
+    merchant: string;
+    deposit_id?: string;
+    transaction_id?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v2/merchant/webhook/resend', {}, body);
+  }
+
+  /**
+   * Fetch a list of merchant webhooks - `GET /v2/merchant/webhooks`
+   */
+  public merchantWebhooks(params: {
+    merchant: string;
+    status?: 'pending' | 'waiting_next_attempt' | 'failed' | 'completed';
+    start_from?: number;
+  }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v2/merchant/webhooks', params);
+  }
+
+  /**
+   * Current TRX price - `GET /v1/payment/currencies/trx`
+   */
+  public getTrxPrice(): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/payment/currencies/trx');
+  }
+
+  /**
+   * Tron energy cost estimate for an address - `GET /v1/payment/tron-energy/cost`
+   */
+  public getTronEnergyCost(address: string): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/payment/tron-energy/cost', { address });
+  }
+
+  /**
+   * Rent Tron energy for an address - `POST /v1/payment/tron-energy/rent`
+   *
+   * @param idempotencyKey (optional) Same as in `transferMoney`: a retry with the same key returns the first result
+   */
+  public rentTronEnergy(address: string, idempotencyKey?: string): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/payment/tron-energy/rent', {}, { address }, idempotencyHeaders(idempotencyKey));
+  }
+
+  /**
+   * Top up a Steam wallet from your WAXPEER balance - `POST /v1/steam-topup`
+   *
+   * Pass a unique `custom_id` and check it with `getSteamTopup` before retrying.
+   *
+   * @param amount Amount in 1/1000 USD (1000 = $1)
+   */
+  public steamTopup(steam_login: string, amount: number, custom_id?: string): Promise<WaxpeerResponse> {
+    return this.request('POST', 'v1/steam-topup', {}, { steam_login, amount, custom_id });
+  }
+
+  /**
+   * Status of a Steam top-up by `id` or `custom_id` - `GET /v1/steam-topup`
+   */
+  public getSteamTopup(params: { id: number } | { custom_id: string }): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/steam-topup', params);
+  }
+
+  /**
+   * Check whether a Steam login can be topped up - `GET /v1/steam-topup/validate`
+   */
+  public validateSteamTopup(steam_login: string, amount?: number): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/steam-topup/validate', { steam_login, amount });
+  }
+
+  /**
+   * Your Steam top-up fee - `GET /v1/steam-topup/fee`
+   */
+  public getSteamTopupFee(): Promise<WaxpeerResponse> {
+    return this.request('GET', 'v1/steam-topup/fee');
+  }
+
+  private request(
+    method: 'GET' | 'POST',
+    path: string,
+    query: Record<string, unknown> = {},
+    body?: unknown,
+    headers: Record<string, string> = {},
+  ): Promise<any> {
+    const url = `${this.baseUrl}/${path}?${qs.stringify({ api: this.api, ...query }, { arrayFormat: 'repeat' })}`;
+    return this.send({ method, url, data: body, headers });
+  }
+
   public async post(url: string, body: any, token?: string): Promise<any> {
     let { baseUrl, api, version } = this;
     let newUrl = `${baseUrl}/${version}/${url}?api=${api}`;
     if (token) newUrl += `&${token}`;
-    try {
-      return (
-        await axios.post(newUrl, body, {
-          headers: { 'Accept-Encoding': 'gzip,deflate,compress' },
-          cancelToken: this.newAxiosCancelationSource(60000),
-          timeout: 60000,
-        })
-      ).data;
-    } catch (e) {
-      throw e?.message;
-    }
+    return this.send({ method: 'POST', url: newUrl, data: body });
   }
 
   public async get(url: string, token?: string): Promise<any> {
     let { baseUrl, api, version } = this;
     let newUrl = `${baseUrl}/${version}/${url}?api=${api}`;
     if (token) newUrl += `&${token}`;
+    return this.send({ method: 'GET', url: newUrl });
+  }
+
+  private async send(config: {
+    method: 'GET' | 'POST';
+    url: string;
+    data?: unknown;
+    headers?: Record<string, string>;
+  }): Promise<any> {
+    // axios `timeout` only bounds socket idle time; the abort caps the whole request at 60 s.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60000);
     try {
       return (
-        await axios.get(newUrl, {
-          headers: { 'Accept-Encoding': 'gzip,deflate,compress' },
-          cancelToken: this.newAxiosCancelationSource(60000),
+        await axios.request({
+          ...config,
+          headers: { 'Accept-Encoding': 'gzip,deflate,compress', ...config.headers },
           timeout: 60000,
+          signal: controller.signal,
         })
       ).data;
     } catch (e) {
       throw e?.message;
+    } finally {
+      clearTimeout(timer);
     }
-  }
-  private newAxiosCancelationSource(ms: number = 1) {
-    const tokenSource = axios.CancelToken.source();
-    setTimeout(() => {
-      tokenSource.cancel();
-    }, ms);
-    return tokenSource.token;
   }
 }

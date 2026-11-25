@@ -105,8 +105,21 @@ interface IBuyOrdersOffer {
 interface ICreateBuyOrder {
   success: boolean;
   msg?: string;
+  /** @deprecated Not sent by the API. */
   filled?: number;
   id?: number;
+  order?: {
+    id: number;
+    name: string;
+    game: string;
+    price: number;
+    amount: number;
+    filled: number;
+    allow_trade_locked: boolean;
+    filters: Record<string, unknown> | null;
+    created?: string;
+    last_update?: string;
+  };
 }
 
 interface IEditBuyOrder {
@@ -216,10 +229,15 @@ interface IBuyMyHistory {
 
 interface History {
   trade_id: null | string;
+  /** @deprecated Not sent by the API. */
   token: string;
+  /** @deprecated Not sent by the API. */
   partner: number;
+  tradelink: string;
+  for_steamid64: string;
   created: string;
   send_until: string;
+  /** `null` when the trade did not fail. */
   reason: Reason;
   id: number;
   item_id: string;
@@ -333,7 +351,12 @@ interface IMerchantUserObject {
 interface IMerchantInventoryUpate {
   success: boolean;
   msg?: string;
+  /** @deprecated Not sent by the API. */
   count?: number;
+  error_message?: string;
+  total_inventory_count?: number;
+  availableItems?: number;
+  newItems?: number;
 }
 
 interface IMerchantInventory {
@@ -463,7 +486,9 @@ interface IMassInfo {
 }
 
 interface IMassInfoData {
+  /** @deprecated The API keys items by name: read `data[name]`. */
   item: IMassInfoItem;
+  [name: string]: IMassInfoItem;
 }
 
 interface IMassInfoItem {
@@ -476,6 +501,7 @@ interface IMassInfoItem {
 interface IMassInfoListing {
   price: number;
   by: string;
+  /** The API sends a number. */
   item_id: string;
   name: string;
   paint_index: number;
@@ -540,11 +566,17 @@ interface IHistory {
 
 interface IHistoryObject {
   item_id: string;
+  /** The API sends a string, or `null` before the Steam offer exists. */
   trade_id: number;
+  /** @deprecated Not sent by the API. */
   token: string;
+  /** @deprecated Not sent by the API. */
   partner: number;
+  tradelink: string;
+  for_steamid64: string;
   created: string;
   send_until: string;
+  /** `null` when the trade did not fail. */
   reason: string;
   id: number;
   image: string;
@@ -711,3 +743,11 @@ const EGameId = {
   tf2: 440,
   rust: 252490,
 } as const;
+
+interface WaxpeerResponse {
+  success?: boolean;
+  msg?: string;
+  status?: string;
+  error_message?: string;
+  [key: string]: any;
+}
